@@ -2,12 +2,12 @@
 use eframe::egui;
 
 #[derive(Default)]
-pub(super) struct MyApp {
+pub(super) struct NWBView {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
 }
 
-impl eframe::App for MyApp {
+impl eframe::App for NWBView {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {

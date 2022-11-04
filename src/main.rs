@@ -1,5 +1,5 @@
 mod gui;
-use gui::MyApp;
+use gui::NWBView;
 
 fn main() {
     let options = eframe::NativeOptions {
@@ -9,6 +9,6 @@ fn main() {
     eframe::run_native(
         "NWB View",
         options,
-        Box::new(|_cc| Box::new(MyApp::default())),
+        Box::new(|_cc| Box::new(NWBView::default())),
     );
 }
