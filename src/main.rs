@@ -1,4 +1,5 @@
 mod gui;
+mod hdf;
 use gui::NWBView;
 
 fn main() {
