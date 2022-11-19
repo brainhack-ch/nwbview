@@ -16,12 +16,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        sudo apt-get install build-essential libgtk-3-dev
+        sudo apt-get install librust-atk-dev
+        sudo apt-get install libhdf5-serial-dev
+        rustup component add clippy
     - name: Check package & dependencies for errors
       run: cargo check
     - name: Lint
       run: |
         cargo fmt -- --check
-        rustup component add clippy
         cargo clippy -- -D warnings
     - name: Build
       run: cargo build --verbose
