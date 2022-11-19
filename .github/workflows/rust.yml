@@ -16,8 +16,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Check package & dependencies for errors
-      run: cargo check
     - name: Lint
       run: |
         cargo fmt -- --check
