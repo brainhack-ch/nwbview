@@ -17,10 +17,10 @@ impl eframe::App for NWBView {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
                     self.picked_path = Some(path.display().to_string());
 
-                    if let Some(picked_path) = &self.picked_path{
-                        match hdf::read_nwb_file(&picked_path){
+                    if let Some(picked_path) = &self.picked_path {
+                        match hdf::read_nwb_file(&picked_path) {
                             Err(_) => self.h5_file = None,
-                            Ok(hdf_file) => self.h5_file = Some(hdf_file), 
+                            Ok(hdf_file) => self.h5_file = Some(hdf_file),
                         }
                     }
                 }
