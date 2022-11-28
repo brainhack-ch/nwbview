@@ -1,8 +1,8 @@
 # nwbview
 
 
-[![Rust](https://github.com/anilbey/nwbview/actions/workflows/rust.yml/badge.svg)](https://github.com/anilbey/nwbview/actions/workflows/rust.yml)
-[![Apache](https://img.shields.io/badge/license-Apache-blue.svg)](https://github.com/anilbey/nwbview/blob/master/LICENSE)
+[![Rust](https://github.com/brainhack-ch/nwbview/actions/workflows/rust.yml/badge.svg)](https://github.com/brainhack-ch/nwbview/actions/workflows/rust.yml)
+[![Apache](https://img.shields.io/badge/license-Apache-blue.svg)](https://github.com/brainhack-ch/nwbview/blob/master/LICENSE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
 `nwbview` is a software to display the contents of the binary NWB file format. It is written in Rust for high-performance, memory safety and ease of deployment.
