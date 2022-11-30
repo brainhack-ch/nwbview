@@ -2,6 +2,7 @@
 
 
 [![Rust](https://github.com/brainhack-ch/nwbview/actions/workflows/rust.yml/badge.svg)](https://github.com/brainhack-ch/nwbview/actions/workflows/rust.yml)
+[![Latest version](https://img.shields.io/crates/v/nwbview.svg)](https://crates.io/crates/nwbview)
 [![Apache](https://img.shields.io/badge/license-Apache-blue.svg)](https://github.com/brainhack-ch/nwbview/blob/master/LICENSE)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
@@ -17,8 +18,22 @@ The underlying storage technology used by the NWB format is the binary [HDF form
 
 `nwbview` uses the [egui](https://github.com/emilk/egui)  Rust GUI library for rendering.
 
+## To install and run using cargo
 
-## How to build
+First install the `cargo` package manager and then run the following command to install `nwbview`.
+
+```shell
+cargo install nwbview
+```
+
+Once you completed the installation, simply type `nwbview` on the console to run it.
+
+```shell
+nwbview
+```
+
+
+## To build and run from the source code
 
 The Rust library dependencies are provided in the `cargo.toml` file.
 
@@ -28,15 +43,9 @@ Note that the Rust libraries depend on the following system packages that need t
 * `librust-atk-dev`
 * `libhdf5-serial-dev`
 
+The exact names of the packages may differ between systems.
+
 Once all the dependencies are satisfied, go to the directory containing `cargo.toml` and run the following command.
-
-```shell
-cargo build
-```
-
-## How to run
-
-Once again go to the directory containing the `cargo.toml` file and simply run the following command.
 
 ```shell
 cargo run --release
