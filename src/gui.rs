@@ -133,11 +133,6 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
-enum Action {
-    Keep,
-}
-
 struct Tree {
     children: Option<Vec<Tree>>,
     name: String,
@@ -157,41 +152,24 @@ impl Tree {
         Tree::default()
     }
 
-    pub fn ui(&mut self, ui: &mut Ui) -> Action {
+    pub fn ui(&mut self, ui: &mut Ui) {
         self.ui_impl(ui, 0)
     }
 }
 
 impl Tree {
-    fn ui_impl(&mut self, ui: &mut Ui, depth: usize) -> Action {
-        // If something to expand
+    fn ui_impl(&self, ui: &mut Ui, depth: usize) {
         CollapsingHeader::new(&self.name)
             .default_open(depth < 1)
-            .show(ui, |ui| self.children_ui(ui, depth))
-            .body_returned
-            .unwrap_or(Action::Keep)
-        // TODO: add not expandable list
+            .show(ui, |ui| self.children_ui(ui, depth));
     }
 
-    fn children_ui(&mut self, ui: &mut Ui, depth: usize) -> Action {
+    fn children_ui(&self, ui: &mut Ui, depth: usize) {
         // make the two possible
-        let children = match std::mem::take(self).children {
-            Some(x) => x,
-            None => Vec::new(),
+        if let Some(children) = &self.children {
+            for child in children {
+                child.ui_impl(ui, depth + 1);
+            }
         };
-        _ = children
-            .into_iter()
-            .enumerate()
-            .filter_map(|(_i, mut tree)| {
-                if tree.ui_impl(ui, depth + 1) == Action::Keep {
-                    Some(tree)
-                } else {
-                    None
-                }
-            });
-        // .collect();
-
-        Action::Keep
     }
 }
-//
