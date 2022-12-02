@@ -140,14 +140,14 @@ enum Action {
 }
 
 struct Tree{
-    vector : Vec<Tree>,
+    children : Option<Vec<Tree>>,
     name : String
 }
 
 impl Default for Tree{
     fn default() -> Self {
         Tree{
-            vector: Vec::new(),
+            children: Some(Vec::new()),
             name: "default".to_string(),
         }
     }
@@ -175,9 +175,12 @@ impl Tree {
     }
 
     fn children_ui(&mut self, ui: &mut Ui, depth: usize) -> Action {
-        self.vector = std::mem::take(self)
-            .vector
-            .into_iter()
+        // make the two possible 
+        let mut children = match std::mem::take(self).children {
+            Some(x) => x,
+            None => Vec::new(),
+        };
+        children =  children.into_iter()
             .enumerate()
             .filter_map(|(i, mut tree)| {
                 if tree.ui_impl(ui, depth + 1) == Action::Keep {
