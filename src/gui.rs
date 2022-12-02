@@ -1,11 +1,26 @@
 use crate::hdf;
 use eframe::egui;
 
-#[derive(Default)]
+use eframe::egui::containers::CollapsingHeader;
+use egui::*;
+
+// #[derive(Default)]
 pub(super) struct NWBView {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     h5_file: Option<hdf5::File>,
+    tree: Tree,
+}
+
+impl Default for NWBView {
+    fn default() -> Self {
+        NWBView {
+            dropped_files: Default::default(),
+            picked_path: None,
+            h5_file: None,
+            tree: Tree::demo(),
+        }
+    }
 }
 
 impl eframe::App for NWBView {
@@ -30,9 +45,17 @@ impl eframe::App for NWBView {
                 ui.horizontal(|ui| {
                     ui.label("Picked file:");
                     let groups = hdf_file.groups().unwrap();
-                    for group in groups {
-                        ui.monospace(group.name());
-                    }
+
+                    ui.collapsing("groups", |ui| {
+                        ui.collapsing("subgroups", |ui| {
+                            for group in groups {
+                                ui.monospace(group.name());
+                            }
+                        });
+                    });
+                    CollapsingHeader::new("Tree")
+                        .default_open(false)
+                        .show(ui, |ui| self.tree.ui(ui));
                 });
             }
 
@@ -112,5 +135,54 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
             TextStyle::Heading.resolve(&ctx.style()),
             Color32::WHITE,
         );
+    }
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum Action {
+    Keep,
+}
+
+#[derive(Clone, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+struct Tree(Vec<Tree>);
+
+impl Tree {
+    pub fn demo() -> Self {
+        Self(vec![
+            Tree(vec![Tree::default(); 4]),
+            Tree(vec![Tree(vec![Tree::default(); 2]); 3]),
+        ])
+    }
+
+    pub fn ui(&mut self, ui: &mut Ui) -> Action {
+        self.ui_impl(ui, 0, "root")
+    }
+}
+
+impl Tree {
+    fn ui_impl(&mut self, ui: &mut Ui, depth: usize, name: &str) -> Action {
+        CollapsingHeader::new(name)
+            .default_open(depth < 1)
+            .show(ui, |ui| self.children_ui(ui, depth))
+            .body_returned
+            .unwrap_or(Action::Keep)
+    }
+
+    fn children_ui(&mut self, ui: &mut Ui, depth: usize) -> Action {
+        self.0 = std::mem::take(self)
+            .0
+            .into_iter()
+            .enumerate()
+            .filter_map(|(i, mut tree)| {
+                if tree.ui_impl(ui, depth + 1, &format!("child #{}", i)) == Action::Keep {
+                    Some(tree)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        Action::Keep
     }
 }

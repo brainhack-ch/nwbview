@@ -1272,6 +1272,7 @@ dependencies = [
  "eframe",
  "hdf5",
  "rfd",
+ "serde",
 ]
 
 [[package]]
