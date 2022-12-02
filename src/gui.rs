@@ -1,8 +1,8 @@
+use crate::gui::egui::Ui;
 use crate::hdf;
 use eframe::egui;
 
 use eframe::egui::containers::CollapsingHeader;
-use egui::*;
 
 // #[derive(Default)]
 pub(super) struct NWBView {
@@ -133,51 +133,43 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
-enum Action {
-    Keep,
+struct Tree {
+    children: Option<Vec<Tree>>,
+    name: String,
 }
 
-#[derive(Clone, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-struct Tree(Vec<Tree>);
+impl Default for Tree {
+    fn default() -> Self {
+        Tree {
+            children: Some(Vec::new()),
+            name: "default".to_string(),
+        }
+    }
+}
 
 impl Tree {
     pub fn demo() -> Self {
-        Self(vec![
-            Tree(vec![Tree::default(); 4]),
-            Tree(vec![Tree(vec![Tree::default(); 2]); 3]),
-        ])
+        Tree::default()
     }
 
-    pub fn ui(&mut self, ui: &mut Ui) -> Action {
-        self.ui_impl(ui, 0, "root")
+    pub fn ui(&mut self, ui: &mut Ui) {
+        self.ui_impl(ui, 0)
     }
 }
 
 impl Tree {
-    fn ui_impl(&mut self, ui: &mut Ui, depth: usize, name: &str) -> Action {
-        CollapsingHeader::new(name)
+    fn ui_impl(&self, ui: &mut Ui, depth: usize) {
+        CollapsingHeader::new(&self.name)
             .default_open(depth < 1)
-            .show(ui, |ui| self.children_ui(ui, depth))
-            .body_returned
-            .unwrap_or(Action::Keep)
+            .show(ui, |ui| self.children_ui(ui, depth));
     }
 
-    fn children_ui(&mut self, ui: &mut Ui, depth: usize) -> Action {
-        self.0 = std::mem::take(self)
-            .0
-            .into_iter()
-            .enumerate()
-            .filter_map(|(i, mut tree)| {
-                if tree.ui_impl(ui, depth + 1, &format!("child #{}", i)) == Action::Keep {
-                    Some(tree)
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        Action::Keep
+    fn children_ui(&self, ui: &mut Ui, depth: usize) {
+        // make the two possible
+        if let Some(children) = &self.children {
+            for child in children {
+                child.ui_impl(ui, depth + 1);
+            }
+        };
     }
 }
