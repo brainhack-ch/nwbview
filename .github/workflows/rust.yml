@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  clippy_check:
+  cargo_checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -19,6 +19,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
+          override: true
           components: rustfmt, clippy
       - name: Run cargo check
         uses: actions-rs/cargo@v1
