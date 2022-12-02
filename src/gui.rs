@@ -9,7 +9,6 @@ pub(super) struct NWBView {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     h5_file: Option<hdf5::File>,
-    tree: Tree,
 }
 
 impl Default for NWBView {
@@ -18,7 +17,6 @@ impl Default for NWBView {
             dropped_files: Default::default(),
             picked_path: None,
             h5_file: None,
-            tree: Tree::demo(),
         }
     }
 }
@@ -45,17 +43,19 @@ impl eframe::App for NWBView {
                     ui.label("Picked file:");
                     let groups = hdf::get_subgroups(hdf_file);
 
-                    ui.collapsing("groups", |ui| {
-                        ui.collapsing("subgroups", |ui| {
-                            for group in groups {
-                                ui.monospace(group.name());
-                                hdf::get_subgroups(&group);
-                            }
-                        });
-                    });
-                    CollapsingHeader::new("Tree")
+                    // ui.collapsing("groups", |ui| {
+                        // ui.collapsing("subgroups", |ui| {
+                    // // // // for group in groups {
+                    // // //     ui.monospace(group.name());
+                    // //     hdf::get_subgroups(&group);
+                    // }
+                        // });
+                    // });
+                    let root_group = hdf_file.clone();
+                    let tree = Tree::demo(root_group);
+                    CollapsingHeader::new("Opening file")
                         .default_open(false)
-                        .show(ui, |ui| self.tree.ui(ui));
+                        .show(ui, |ui| tree.ui(ui));
                 });
             }
 
@@ -133,23 +133,23 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
     }
 }
 
+pub enum hdf5_content {
+    file,
+    group,
+}
 struct Tree {
+    group: hdf5_content,
     children: Option<Vec<Tree>>,
     name: String,
 }
 
-impl Default for Tree {
-    fn default() -> Self {
-        Tree {
-            children: Some(Vec::new()),
-            name: "default".to_string(),
-        }
-    }
-}
-
 impl Tree {
-    pub fn demo() -> Self {
-        Tree::default()
+    pub fn demo(group: hdf5_content) -> Self {
+        Tree{
+            group: group,
+            children: Some(Vec::new()),
+            name: group.name(),
+        }
     }
 
     pub fn ui(&mut self, ui: &mut Ui) {
