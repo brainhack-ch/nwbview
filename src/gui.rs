@@ -1,9 +1,8 @@
+use crate::gui::egui::Ui;
 use crate::hdf;
 use eframe::egui;
-use crate::gui::egui::Ui;
 
 use eframe::egui::containers::CollapsingHeader;
-use egui::*;
 
 // #[derive(Default)]
 pub(super) struct NWBView {
@@ -139,14 +138,14 @@ enum Action {
     Keep,
 }
 
-struct Tree{
-    children : Option<Vec<Tree>>,
-    name : String
+struct Tree {
+    children: Option<Vec<Tree>>,
+    name: String,
 }
 
-impl Default for Tree{
+impl Default for Tree {
     fn default() -> Self {
-        Tree{
+        Tree {
             children: Some(Vec::new()),
             name: "default".to_string(),
         }
@@ -175,22 +174,24 @@ impl Tree {
     }
 
     fn children_ui(&mut self, ui: &mut Ui, depth: usize) -> Action {
-        // make the two possible 
-        let mut children = match std::mem::take(self).children {
+        // make the two possible
+        let children = match std::mem::take(self).children {
             Some(x) => x,
             None => Vec::new(),
         };
-        children =  children.into_iter()
+        _ = children
+            .into_iter()
             .enumerate()
-            .filter_map(|(i, mut tree)| {
+            .filter_map(|(_i, mut tree)| {
                 if tree.ui_impl(ui, depth + 1) == Action::Keep {
                     Some(tree)
                 } else {
                     None
                 }
-            })
-            .collect();
+            });
+        // .collect();
 
         Action::Keep
     }
 }
+//
