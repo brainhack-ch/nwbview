@@ -1,5 +1,6 @@
 use crate::hdf;
 use eframe::egui;
+use crate::gui::egui::Ui;
 
 use eframe::egui::containers::CollapsingHeader;
 use egui::*;
@@ -138,39 +139,48 @@ enum Action {
     Keep,
 }
 
-#[derive(Clone, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-struct Tree(Vec<Tree>);
+struct Tree{
+    vector : Vec<Tree>,
+    name : String
+}
 
-impl Tree {
-    pub fn demo() -> Self {
-        Self(vec![
-            Tree(vec![Tree::default(); 4]),
-            Tree(vec![Tree(vec![Tree::default(); 2]); 3]),
-        ])
-    }
-
-    pub fn ui(&mut self, ui: &mut Ui) -> Action {
-        self.ui_impl(ui, 0, "root")
+impl Default for Tree{
+    fn default() -> Self {
+        Tree{
+            vector: Vec::new(),
+            name: "default".to_string(),
+        }
     }
 }
 
 impl Tree {
-    fn ui_impl(&mut self, ui: &mut Ui, depth: usize, name: &str) -> Action {
-        CollapsingHeader::new(name)
+    pub fn demo() -> Self {
+        Tree::default()
+    }
+
+    pub fn ui(&mut self, ui: &mut Ui) -> Action {
+        self.ui_impl(ui, 0)
+    }
+}
+
+impl Tree {
+    fn ui_impl(&mut self, ui: &mut Ui, depth: usize) -> Action {
+        // If something to expand
+        CollapsingHeader::new(&self.name)
             .default_open(depth < 1)
             .show(ui, |ui| self.children_ui(ui, depth))
             .body_returned
             .unwrap_or(Action::Keep)
+        // TODO: add not expandable list
     }
 
     fn children_ui(&mut self, ui: &mut Ui, depth: usize) -> Action {
-        self.0 = std::mem::take(self)
-            .0
+        self.vector = std::mem::take(self)
+            .vector
             .into_iter()
             .enumerate()
             .filter_map(|(i, mut tree)| {
-                if tree.ui_impl(ui, depth + 1, &format!("child #{}", i)) == Action::Keep {
+                if tree.ui_impl(ui, depth + 1) == Action::Keep {
                     Some(tree)
                 } else {
                     None
