@@ -32,6 +32,7 @@ impl eframe::App for NWBView {
             if ui.button("Open file…").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
                     self.picked_path = Some(path.display().to_string());
+                    self.dropped_files.clear();
 
                     if let Some(picked_path) = &self.picked_path {
                         self.h5_file = hdf::read_nwb_file(picked_path);
@@ -78,16 +79,11 @@ impl eframe::App for NWBView {
                         } else {
                             "???".to_owned()
                         };
+                        ui.label(&info);
                         self.h5_file = hdf::read_nwb_file(&info);
                     }
                 });
-            }
-
-            if let Some(picked_path) = &self.picked_path {
-                ui.horizontal(|ui| {
-                    ui.label("Picked file:");
-                    ui.monospace(picked_path);
-                });
+                self.picked_path = None;
             }
 
             ui.horizontal(|ui| {
