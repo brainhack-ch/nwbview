@@ -51,8 +51,7 @@ impl eframe::App for NWBView {
                     // }
                         // });
                     // });
-                    let root_group = hdf_file.clone();
-                    let tree = Tree::demo(root_group);
+                    let mut tree = Tree::demo(hdf_file);
                     CollapsingHeader::new("Opening file")
                         .default_open(false)
                         .show(ui, |ui| tree.ui(ui));
@@ -133,21 +132,17 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
     }
 }
 
-pub enum hdf5_content {
-    file,
-    group,
-}
-struct Tree {
-    group: hdf5_content,
-    children: Option<Vec<Tree>>,
+struct Tree<'a> {
+    group: &'a hdf5::Group,
+    children: Option<Vec<Tree<'a>>>,
     name: String,
 }
 
-impl Tree {
-    pub fn demo(group: hdf5_content) -> Self {
+impl<'a> Tree<'a> {
+    pub fn demo(group: &'a hdf5::Group) -> Self {
         Tree{
-            group: group,
-            children: Some(Vec::new()),
+            group,
+            children: None,
             name: group.name(),
         }
     }
@@ -157,7 +152,7 @@ impl Tree {
     }
 }
 
-impl Tree {
+impl<'a> Tree<'a> {
     fn ui_impl(&self, ui: &mut Ui, depth: usize) {
         CollapsingHeader::new(&self.name)
             .default_open(depth < 1)
