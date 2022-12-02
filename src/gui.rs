@@ -28,15 +28,13 @@ impl eframe::App for NWBView {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.label("Drag-and-drop files onto the window!");
 
+            // Process file when Open button is clicked
             if ui.button("Open file…").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
                     self.picked_path = Some(path.display().to_string());
 
                     if let Some(picked_path) = &self.picked_path {
-                        match hdf::read_nwb_file(picked_path) {
-                            Err(_) => self.h5_file = None,
-                            Ok(hdf_file) => self.h5_file = Some(hdf_file),
-                        }
+                        self.h5_file = hdf::read_nwb_file(picked_path);
                     }
                 }
             }
@@ -44,12 +42,13 @@ impl eframe::App for NWBView {
             if let Some(hdf_file) = &self.h5_file {
                 ui.horizontal(|ui| {
                     ui.label("Picked file:");
-                    let groups = hdf_file.groups().unwrap();
+                    let groups = hdf::get_subgroups(hdf_file);
 
                     ui.collapsing("groups", |ui| {
                         ui.collapsing("subgroups", |ui| {
                             for group in groups {
                                 ui.monospace(group.name());
+                                hdf::get_subgroups(&group);
                             }
                         });
                     });
@@ -66,7 +65,7 @@ impl eframe::App for NWBView {
                 });
             }
 
-            // Show dropped files (if any):
+            // Process dropped files (if any):
             if !self.dropped_files.is_empty() {
                 ui.group(|ui| {
                     ui.label("Dropped NWB files:");
@@ -79,18 +78,18 @@ impl eframe::App for NWBView {
                         } else {
                             "???".to_owned()
                         };
-                        let hdf_file = hdf::read_nwb_file(&info);
-                        // let filename = hdf_file.unwrap();
-                        if let Ok(hdf_file) = hdf_file {
-                            ui.label(info);
-                            let groups = hdf_file.groups().unwrap();
-                            for group in groups {
-                                ui.monospace(group.name());
-                            }
-                        }
+                        self.h5_file = hdf::read_nwb_file(&info);
                     }
                 });
             }
+
+            if let Some(picked_path) = &self.picked_path {
+                ui.horizontal(|ui| {
+                    ui.label("Picked file:");
+                    ui.monospace(picked_path);
+                });
+            }
+
             ui.horizontal(|ui| {
                 ui.label("Theme:");
                 egui::widgets::global_dark_light_mode_buttons(ui);
