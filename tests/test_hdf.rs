@@ -14,7 +14,7 @@ fn read_valid_file() {
 
 #[test]
 fn read_invalid_file() {
-    assert_eq!(hdf::read_nwb_file("../data/UNKNOWN.nwb").is_none(), true);
+    assert_eq!(hdf::read_nwb_file("data/UNKNOWN.nwb").is_none(), true);
 }
 
 #[test]
