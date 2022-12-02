@@ -1,5 +1,6 @@
 use crate::gui::egui::Ui;
 use crate::hdf;
+use crate::plot::Demo;
 use eframe::egui;
 
 // use eframe::egui::containers::CollapsingHeader;
@@ -102,6 +103,11 @@ impl eframe::App for NWBView {
                 ui.label("Theme:");
                 egui::widgets::global_dark_light_mode_buttons(ui);
             });
+
+            ui.separator();
+            let mut test_plot = Box::new(super::plot::ContextMenus::default());
+            let mut is_open: bool = true;
+            test_plot.show(ctx, &mut is_open);
         });
 
         preview_files_being_dropped(ctx);
