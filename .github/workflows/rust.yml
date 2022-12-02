@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get install -y librust-atk-dev
       - name: Check package & dependencies for errors
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
-          override: true
-          components: rustfmt, clippy
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
@@ -35,11 +35,6 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command:
-            check
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
