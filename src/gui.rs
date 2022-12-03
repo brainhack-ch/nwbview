@@ -4,34 +4,35 @@ use crate::plot::Demo;
 use eframe::egui;
 
 // use eframe::egui::containers::CollapsingHeader;
-
-pub fn create_group_recurision(group: &hdf5::Group, ui: &mut Ui) {
-    // println!("Group Starting {}",group.name());
-    ui.collapsing(group.name(), |ui| {
-        let subgroups = group.groups().unwrap();
-        if !subgroups.is_empty() {
-            for subgroup in subgroups {
-                // println!("{}",subgroup.name());
-                create_group_recurision(&subgroup, ui);
-            }
-        }
-
-        let datasets = group.datasets().unwrap();
-        if !datasets.is_empty() {
-            for dataset in datasets {
-                if ui.button(dataset.name()).clicked() {
-                    // ui.close_menu();
-                }
-            }
-        }
-    });
-}
-
 #[derive(Default)]
 pub(super) struct NWBView {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     h5_path: Option<String>,
+}
+
+impl NWBView {
+    fn create_group_recurision(&mut self, group: &hdf5::Group, ui: &mut Ui) {
+        // println!("Group Starting {}",group.name());
+        ui.collapsing(group.name(), |ui| {
+            let subgroups = group.groups().unwrap();
+            if !subgroups.is_empty() {
+                for subgroup in subgroups {
+                    // println!("{}",subgroup.name());
+                    self.create_group_recurision(&subgroup, ui);
+                }
+            }
+
+            let datasets = group.datasets().unwrap();
+            if !datasets.is_empty() {
+                for dataset in datasets {
+                    if ui.button(dataset.name()).clicked() {
+                        // ui.close_menu();
+                    }
+                }
+            }
+        });
+    }
 }
 
 impl eframe::App for NWBView {
@@ -55,7 +56,7 @@ impl eframe::App for NWBView {
                 let h5_file = hdf::read_nwb_file(hdf_path).unwrap();
                 ui.horizontal(|ui| {
                     ui.label("NWB Contents");
-                    create_group_recurision(&h5_file, ui);
+                    self.create_group_recurision(&h5_file, ui);
                 });
             }
 
