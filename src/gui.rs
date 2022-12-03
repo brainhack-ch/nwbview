@@ -18,11 +18,12 @@ pub fn create_group_recurision(group: &hdf5::Group, ui: &mut Ui) {
         let datasets = group.datasets().unwrap();
         if !datasets.is_empty() {
             for dataset in datasets {
-                ui.monospace(dataset.name());
+                if ui.button(dataset.name()).clicked() {
+                    // ui.close_menu();
+                }
             }
         }
     });
-    // println!("Group Ending {}",group.name());
 }
 
 #[derive(Default)]
