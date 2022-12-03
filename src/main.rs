@@ -1,5 +1,6 @@
 mod gui;
 mod hdf;
+mod plot;
 use gui::NWBView;
 
 fn main() {
