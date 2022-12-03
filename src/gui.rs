@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use crate::gui::egui::Ui;
 use crate::hdf;
 use crate::plot::Demo;
@@ -9,6 +11,7 @@ pub(super) struct NWBView {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     h5_path: Option<String>,
+    open_windows: BTreeSet<String>,
 }
 
 impl NWBView {
@@ -26,9 +29,9 @@ impl NWBView {
             let datasets = group.datasets().unwrap();
             if !datasets.is_empty() {
                 for dataset in datasets {
-                    if ui.button(dataset.name()).clicked() {
-                        // ui.close_menu();
-                    }
+                    let mut is_open = self.open_windows.contains(&dataset.name());
+                    ui.checkbox(&mut is_open, &dataset.name());
+                    set_open(&mut self.open_windows, &dataset.name().to_string(), is_open);
                 }
             }
         });
@@ -136,5 +139,15 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
             TextStyle::Heading.resolve(&ctx.style()),
             Color32::WHITE,
         );
+    }
+}
+
+fn set_open(open: &mut BTreeSet<String>, key: &String, is_open: bool) {
+    if is_open {
+        if !open.contains(key) {
+            open.insert(key.to_owned());
+        }
+    } else {
+        open.remove(key);
     }
 }
