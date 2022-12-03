@@ -5,14 +5,14 @@ use eframe::egui;
 
 // use eframe::egui::containers::CollapsingHeader;
 
-pub fn create_group_recurision(group: hdf5::Group, ui: &mut Ui) {
+pub fn create_group_recurision(group: &hdf5::Group, ui: &mut Ui) {
     // println!("Group Starting {}",group.name());
     ui.collapsing(group.name(), |ui| {
         let subgroups = group.groups().unwrap();
         if !subgroups.is_empty() {
             for subgroup in subgroups {
                 // println!("{}",subgroup.name());
-                create_group_recurision(subgroup, ui);
+                create_group_recurision(&subgroup, ui);
             }
         }
 
@@ -55,19 +55,7 @@ impl eframe::App for NWBView {
                 let h5_file = hdf::read_nwb_file(hdf_path).unwrap();
                 ui.horizontal(|ui| {
                     ui.label("NWB Contents");
-                    let groups = h5_file.groups().unwrap();
-                    let datasets = h5_file.datasets().unwrap();
-                    ui.collapsing("/", |ui| {
-                        for subgroup in groups {
-                            // println!("{}",subgroup.name());
-                            create_group_recurision(subgroup, ui);
-                        }
-                        for dataset in datasets {
-                            if ui.button(dataset.name()).clicked() {
-                                ui.monospace("text1");
-                            }
-                        }
-                    });
+                    create_group_recurision(&h5_file, ui);
                 });
             }
 
