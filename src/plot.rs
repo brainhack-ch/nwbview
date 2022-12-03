@@ -46,7 +46,7 @@ impl Demo for ContextMenus {
     }
 
     fn show(&mut self, ctx: &egui::Context, open: &mut bool, hdf5_group: &hdf5::Group) {
-        egui::Window::new(self.name())
+        egui::Window::new(hdf5_group.name())
             .vscroll(false)
             .resizable(false)
             .open(open)
@@ -58,7 +58,7 @@ impl View for ContextMenus {
     fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf5::Group) {
         ui.separator();
 
-        ui.label("Right-click plot to edit it!");
+        ui.label("Zoom in zoom out using mouse.");
         ui.horizontal(|ui| {
             self.example_plot(ui, hdf5_group).context_menu(|_ui| {});
         });
