@@ -7,9 +7,9 @@ pub(crate) fn read_nwb_file(path: &str) -> Option<hdf5::File> {
     }
 }
 
-pub fn get_subgroups(group: &hdf5::Group) -> Vec<hdf5::Group> {
-    group.groups().unwrap()
-}
+// pub fn get_subgroups(group: &hdf5::Group) -> Vec<hdf5::Group> {
+//     group.groups().unwrap()
+// }
 
 // pub fn print_subgroups(group: &hdf5::Group) {
 //     let groups = get_subgroups(group);

@@ -21,7 +21,7 @@ fn read_invalid_file() {
 fn get_subgroups_from_file() {
     let input_file =
         hdf::read_nwb_file("data/sub-anm266951_ses-20141201_behavior+icephys+ogen.nwb");
-    let groups = hdf::get_subgroups(&input_file.unwrap());
+    let groups = input_file.unwrap().groups().unwrap();
     let expected_groups: Vec<String> = vec![
         "/acquisition".to_string(),
         "/analysis".to_string(),

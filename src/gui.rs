@@ -2,26 +2,45 @@ use crate::gui::egui::Ui;
 use crate::hdf;
 use eframe::egui;
 
-use eframe::egui::containers::CollapsingHeader;
+// use eframe::egui::containers::CollapsingHeader;
 
-// #[derive(Default)]
+pub fn create_group_recurision(group: &hdf5::Group, ui: &mut Ui) {
+    // println!("Group Starting {}",group.name());
+    ui.collapsing(group.name(), |ui| {
+        let subgroups = group.groups().unwrap();
+        if !subgroups.is_empty() {
+            for subgroup in subgroups {
+                // println!("{}",subgroup.name());
+                create_group_recurision(&subgroup, ui);
+            }
+        }
+
+        let datasets = group.datasets().unwrap();
+        if !datasets.is_empty() {
+            for dataset in datasets {
+                ui.monospace(dataset.name());
+            }
+        }
+    });
+    // println!("Group Ending {}",group.name());
+}
+
+#[derive(Default)]
 pub(super) struct NWBView {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
     h5_file: Option<hdf5::File>,
-    tree: Tree,
 }
 
-impl Default for NWBView {
-    fn default() -> Self {
-        NWBView {
-            dropped_files: Default::default(),
-            picked_path: None,
-            h5_file: None,
-            tree: Tree::demo(),
-        }
-    }
-}
+// impl Default for NWBView {
+//     fn default() -> Self {
+//         NWBView {
+//             dropped_files: Default::default(),
+//             picked_path: None,
+//             h5_file: None,
+//         }
+//     }
+// }
 
 impl eframe::App for NWBView {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -42,20 +61,12 @@ impl eframe::App for NWBView {
 
             if let Some(hdf_file) = &self.h5_file {
                 ui.horizontal(|ui| {
-                    ui.label("Picked file:");
-                    let groups = hdf::get_subgroups(hdf_file);
-
-                    ui.collapsing("groups", |ui| {
-                        ui.collapsing("subgroups", |ui| {
-                            for group in groups {
-                                ui.monospace(group.name());
-                                hdf::get_subgroups(&group);
-                            }
-                        });
-                    });
-                    CollapsingHeader::new("Tree")
-                        .default_open(false)
-                        .show(ui, |ui| self.tree.ui(ui));
+                    ui.label("NWB Contents");
+                    // let groups = hdf::get_subgroups(hdf_file);
+                    create_group_recurision(hdf_file, ui);
+                    // ui.collapsing(hdf_file.name(), |ui| {
+                    //     create_group_recurision(hdf_file, ui);
+                    // });
                 });
             }
 
@@ -130,46 +141,5 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
             TextStyle::Heading.resolve(&ctx.style()),
             Color32::WHITE,
         );
-    }
-}
-
-struct Tree {
-    children: Option<Vec<Tree>>,
-    name: String,
-}
-
-impl Default for Tree {
-    fn default() -> Self {
-        Tree {
-            children: Some(Vec::new()),
-            name: "default".to_string(),
-        }
-    }
-}
-
-impl Tree {
-    pub fn demo() -> Self {
-        Tree::default()
-    }
-
-    pub fn ui(&mut self, ui: &mut Ui) {
-        self.ui_impl(ui, 0)
-    }
-}
-
-impl Tree {
-    fn ui_impl(&self, ui: &mut Ui, depth: usize) {
-        CollapsingHeader::new(&self.name)
-            .default_open(depth < 1)
-            .show(ui, |ui| self.children_ui(ui, depth));
-    }
-
-    fn children_ui(&self, ui: &mut Ui, depth: usize) {
-        // make the two possible
-        if let Some(children) = &self.children {
-            for child in children {
-                child.ui_impl(ui, depth + 1);
-            }
-        };
     }
 }
