@@ -75,8 +75,15 @@ impl ContextMenus {
         let y_data: Vec<f64> = hdf5_group.dataset("data").unwrap().read_raw().unwrap();
         use egui::plot::{Line, PlotPoints};
         let n = x_data.len() - 1;
+        let step_size: usize = if n > 10000 {
+            let log_n = (n as f64).log(10.0).ceil().powi(3);
+            log_n as usize
+        } else {
+            1
+        };
         let line = Line::new(
             (0..=n)
+                .step_by(step_size)
                 .map(|i| [x_data[i], y_data[i]])
                 .collect::<PlotPoints>(),
         );
