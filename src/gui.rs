@@ -15,23 +15,46 @@ pub(super) struct NWBView {
 }
 
 impl NWBView {
-    fn create_group_recurision(&mut self, group: &hdf5::Group, ui: &mut Ui) {
+    fn create_group_recurision(&mut self, group: &hdf5::Group, ui: &mut Ui, ctx: &egui::Context) {
         // println!("Group Starting {}",group.name());
         ui.collapsing(group.name(), |ui| {
             let subgroups = group.groups().unwrap();
             if !subgroups.is_empty() {
                 for subgroup in subgroups {
                     // println!("{}",subgroup.name());
-                    self.create_group_recurision(&subgroup, ui);
+                    self.create_group_recurision(&subgroup, ui, ctx);
                 }
             }
 
             let datasets = group.datasets().unwrap();
+            let mut dataset_names: BTreeSet<String> = BTreeSet::default();
             if !datasets.is_empty() {
                 for dataset in datasets {
-                    let mut is_open = self.open_windows.contains(&dataset.name());
-                    ui.checkbox(&mut is_open, &dataset.name());
-                    set_open(&mut self.open_windows, &dataset.name().to_string(), is_open);
+                    ui.monospace(dataset.name());
+                    // let mut is_open = self.open_windows.contains(&dataset.name());
+                    // ui.checkbox(&mut is_open, &dataset.name());
+                    // set_open(&mut self.open_windows, &dataset.name().to_string(), is_open);
+                    let full_dataset_name = dataset.name().to_string();
+                    // split string name by "/"
+                    let split_name: Vec<&str> = full_dataset_name.split("/").collect();
+                    // get the last element of the split string
+                    let dataset_name = split_name.last().unwrap();
+                    dataset_names.insert(dataset_name.to_string());
+                }
+                if dataset_names.contains("data") && dataset_names.contains("timestamps") {
+                    let mut is_open = self.open_windows.contains(&group.name());
+                    if ui.button("plot").clicked() {
+                        println!("plotting");
+                        print!("is_open: {}", is_open);
+                        if !is_open {
+                            is_open = true;
+                        }
+                    }
+                    if is_open {
+                        let mut test_plot = Box::new(super::plot::ContextMenus::default());
+                        set_open(&mut self.open_windows, &group.name().to_string(), is_open);
+                        test_plot.show(ctx, &mut is_open);
+                    }
                 }
             }
         });
@@ -59,7 +82,7 @@ impl eframe::App for NWBView {
                 let h5_file = hdf::read_nwb_file(hdf_path).unwrap();
                 ui.horizontal(|ui| {
                     ui.label("NWB Contents");
-                    self.create_group_recurision(&h5_file, ui);
+                    self.create_group_recurision(&h5_file, ui, ctx);
                 });
             }
 
@@ -94,11 +117,6 @@ impl eframe::App for NWBView {
                 ui.label("Theme:");
                 egui::widgets::global_dark_light_mode_buttons(ui);
             });
-
-            ui.separator();
-            let mut test_plot = Box::new(super::plot::ContextMenus::default());
-            let mut is_open: bool = true;
-            test_plot.show(ctx, &mut is_open);
         });
 
         preview_files_being_dropped(ctx);
