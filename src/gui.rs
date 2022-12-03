@@ -5,14 +5,14 @@ use eframe::egui;
 
 // use eframe::egui::containers::CollapsingHeader;
 
-pub fn create_group_recurision(group: &hdf5::Group, ui: &mut Ui) {
+pub fn create_group_recurision(group: hdf5::Group, ui: &mut Ui) {
     // println!("Group Starting {}",group.name());
     ui.collapsing(group.name(), |ui| {
         let subgroups = group.groups().unwrap();
         if !subgroups.is_empty() {
             for subgroup in subgroups {
                 // println!("{}",subgroup.name());
-                create_group_recurision(&subgroup, ui);
+                create_group_recurision(subgroup, ui);
             }
         }
 
@@ -31,7 +31,7 @@ pub fn create_group_recurision(group: &hdf5::Group, ui: &mut Ui) {
 pub(super) struct NWBView {
     dropped_files: Vec<egui::DroppedFile>,
     picked_path: Option<String>,
-    h5_file: Option<hdf5::File>,
+    h5_path: Option<String>,
 }
 
 impl eframe::App for NWBView {
@@ -46,15 +46,28 @@ impl eframe::App for NWBView {
                     self.dropped_files.clear();
 
                     if let Some(picked_path) = &self.picked_path {
-                        self.h5_file = hdf::read_nwb_file(picked_path);
+                        self.h5_path = Some(picked_path.to_string());
                     }
                 }
             }
 
-            if let Some(hdf_file) = &self.h5_file {
+            if let Some(hdf_path) = &self.h5_path {
+                let h5_file = hdf::read_nwb_file(hdf_path).unwrap();
                 ui.horizontal(|ui| {
                     ui.label("NWB Contents");
-                    create_group_recurision(hdf_file, ui);
+                    let groups = h5_file.groups().unwrap();
+                    let datasets = h5_file.datasets().unwrap();
+                    ui.collapsing("/", |ui| {
+                        for subgroup in groups {
+                            // println!("{}",subgroup.name());
+                            create_group_recurision(subgroup, ui);
+                        }
+                        for dataset in datasets {
+                            if ui.button(dataset.name()).clicked() {
+                                ui.monospace("text1");
+                            }
+                        }
+                    });
                 });
             }
 
@@ -79,7 +92,7 @@ impl eframe::App for NWBView {
                             "???".to_owned()
                         };
                         ui.label(&info);
-                        self.h5_file = hdf::read_nwb_file(&info);
+                        // self.h5_file = hdf::read_nwb_file(&info);
                     }
                 });
                 self.picked_path = None;
