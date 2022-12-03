@@ -34,16 +34,6 @@ pub(super) struct NWBView {
     h5_file: Option<hdf5::File>,
 }
 
-// impl Default for NWBView {
-//     fn default() -> Self {
-//         NWBView {
-//             dropped_files: Default::default(),
-//             picked_path: None,
-//             h5_file: None,
-//         }
-//     }
-// }
-
 impl eframe::App for NWBView {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -64,11 +54,7 @@ impl eframe::App for NWBView {
             if let Some(hdf_file) = &self.h5_file {
                 ui.horizontal(|ui| {
                     ui.label("NWB Contents");
-                    // let groups = hdf::get_subgroups(hdf_file);
                     create_group_recurision(hdf_file, ui);
-                    // ui.collapsing(hdf_file.name(), |ui| {
-                    //     create_group_recurision(hdf_file, ui);
-                    // });
                 });
             }
 
