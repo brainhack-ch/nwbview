@@ -34,8 +34,8 @@ impl Default for ContextMenus {
             allow_scroll: true,
             center_x_axis: false,
             center_y_axis: false,
-            width: 400.0,
-            height: 200.0,
+            width: 800.0,
+            height: 400.0,
         }
     }
 }
