@@ -36,7 +36,7 @@ impl NWBView {
                     // set_open(&mut self.open_windows, &dataset.name().to_string(), is_open);
                     let full_dataset_name = dataset.name().to_string();
                     // split string name by "/"
-                    let split_name: Vec<&str> = full_dataset_name.split("/").collect();
+                    let split_name: Vec<&str> = full_dataset_name.split('/').collect();
                     // get the last element of the split string
                     let dataset_name = split_name.last().unwrap();
                     dataset_names.insert(dataset_name.to_string());
@@ -52,8 +52,8 @@ impl NWBView {
                     }
                     if is_open {
                         let mut test_plot = Box::new(super::plot::ContextMenus::default());
-                        set_open(&mut self.open_windows, &group.name().to_string(), is_open);
-                        test_plot.show(ctx, &mut is_open);
+                        set_open(&mut self.open_windows, &group.name(), is_open);
+                        test_plot.show(ctx, &mut is_open, group);
                     }
                 }
             }

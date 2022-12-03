@@ -1,7 +1,7 @@
 use eframe::egui;
 
 pub trait View {
-    fn ui(&mut self, ui: &mut egui::Ui);
+    fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf5::Group);
 }
 
 pub trait Demo {
@@ -9,25 +9,12 @@ pub trait Demo {
     fn name(&self) -> &'static str;
 
     /// Show windows, etc
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool);
-}
-
-#[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-enum Plot {
-    Sin,
-    Bell,
-}
-
-fn gaussian(x: f64) -> f64 {
-    let var: f64 = 2.0;
-    f64::exp(-(x / var).powi(2)) / (var * f64::sqrt(std::f64::consts::TAU))
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, hdf5_group: &hdf5::Group);
 }
 
 #[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct ContextMenus {
-    plot: Plot,
     show_axes: [bool; 2],
     allow_drag: bool,
     allow_zoom: bool,
@@ -41,7 +28,6 @@ pub struct ContextMenus {
 impl Default for ContextMenus {
     fn default() -> Self {
         Self {
-            plot: Plot::Sin,
             show_axes: [true, true],
             allow_drag: true,
             allow_zoom: true,
@@ -59,40 +45,39 @@ impl Demo for ContextMenus {
         "☰ Context Menus"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, hdf5_group: &hdf5::Group) {
         egui::Window::new(self.name())
             .vscroll(false)
             .resizable(false)
             .open(open)
-            .show(ctx, |ui| self.ui(ui));
+            .show(ctx, |ui| self.ui(ui, hdf5_group));
     }
 }
 
 impl View for ContextMenus {
-    fn ui(&mut self, ui: &mut egui::Ui) {
+    fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf5::Group) {
         ui.separator();
 
         ui.label("Right-click plot to edit it!");
         ui.horizontal(|ui| {
-            self.example_plot(ui).context_menu(|_ui| {});
+            self.example_plot(ui, hdf5_group).context_menu(|_ui| {});
         });
     }
 }
 
 impl ContextMenus {
-    fn example_plot(&self, ui: &mut egui::Ui) -> egui::Response {
+    fn example_plot(&self, ui: &mut egui::Ui, hdf5_group: &hdf5::Group) -> egui::Response {
+        let x_data: Vec<f64> = hdf5_group
+            .dataset("timestamps")
+            .unwrap()
+            .read_raw()
+            .unwrap();
+        let y_data: Vec<f64> = hdf5_group.dataset("data").unwrap().read_raw().unwrap();
         use egui::plot::{Line, PlotPoints};
-        let n = 128;
+        let n = x_data.len() - 1;
         let line = Line::new(
             (0..=n)
-                .map(|i| {
-                    use std::f64::consts::TAU;
-                    let x = egui::remap(i as f64, 0.0..=n as f64, -TAU..=TAU);
-                    match self.plot {
-                        Plot::Sin => [x, x.sin()],
-                        Plot::Bell => [x, 10.0 * gaussian(x)],
-                    }
-                })
+                .map(|i| [x_data[i], y_data[i]])
                 .collect::<PlotPoints>(),
         );
         egui::plot::Plot::new("example_plot")
