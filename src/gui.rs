@@ -7,55 +7,58 @@ use eframe::egui;
 
 // use eframe::egui::containers::CollapsingHeader;
 #[derive(Default)]
-pub(super) struct NWBView {
-    dropped_files: Vec<egui::DroppedFile>,
-    picked_path: Option<String>,
-    h5_path: Option<String>,
-    open_windows: BTreeSet<String>,
+pub(crate) struct NWBView {
+    pub loaded_files: Vec<hdf::FileTree>,
+    pub open_windows: BTreeSet<String>,
+    // dropped_files: Vec<egui::DroppedFile>,
+    // picked_path: Option<String>,
+    // h5_path: Option<String>,
 }
 
 impl NWBView {
-    fn create_group_recurision(&mut self, group: &hdf5::Group, ui: &mut Ui, ctx: &egui::Context) {
+    fn create_group_recursion(&self, group: &hdf::GroupTree, ui: &mut Ui, ctx: &egui::Context) {
         // println!("Group Starting {}",group.name());
-        ui.collapsing(group.name(), |ui| {
-            let subgroups = group.groups().unwrap();
+        ui.collapsing(group.handler.name(), |ui| {
+            let subgroups = &group.groups;
             if !subgroups.is_empty() {
                 for subgroup in subgroups {
                     // println!("{}",subgroup.name());
-                    self.create_group_recurision(&subgroup, ui, ctx);
+                    self.create_group_recursion(&subgroup, ui, ctx);
                 }
             }
 
-            let datasets = group.datasets().unwrap();
+            let datasets = &group.datasets;
             let mut dataset_names: BTreeSet<String> = BTreeSet::default();
             if !datasets.is_empty() {
                 for dataset in datasets {
-                    ui.monospace(dataset.name());
                     // let mut is_open = self.open_windows.contains(&dataset.name());
                     // ui.checkbox(&mut is_open, &dataset.name());
                     // set_open(&mut self.open_windows, &dataset.name().to_string(), is_open);
-                    let full_dataset_name = dataset.name().to_string();
+                    // let full_dataset_name = dataset.name().to_string();
                     // split string name by "/"
-                    let split_name: Vec<&str> = full_dataset_name.split('/').collect();
+                    // let full_dataset_name = dataset;
+                    let split_name: Vec<&str> = dataset.split('/').collect();
+                    // let split_name: Vec<&str> = full_dataset_name.split('/').collect();
                     // get the last element of the split string
                     let dataset_name = split_name.last().unwrap();
                     dataset_names.insert(dataset_name.to_string());
+                    ui.monospace(dataset);
                 }
-                if dataset_names.contains("data") && dataset_names.contains("timestamps") {
-                    let mut is_open = self.open_windows.contains(&group.name());
-                    if ui.button("plot").clicked() {
-                        println!("plotting");
-                        print!("is_open: {}", is_open);
-                        if !is_open {
-                            is_open = true;
-                        }
-                    }
-                    if is_open {
-                        let mut test_plot = Box::new(super::plot::ContextMenus::default());
-                        set_open(&mut self.open_windows, &group.name(), is_open);
-                        test_plot.show(ctx, &mut is_open, group);
-                    }
-                }
+                // if dataset_names.contains("data") && dataset_names.contains("timestamps") {
+                //     let mut is_open = self.open_windows.contains(&group.handler.name());
+                //     if ui.button("plot").clicked() {
+                //         println!("plotting");
+                //         print!("is_open: {}", is_open);
+                //         if !is_open {
+                //             is_open = true;
+                //         }
+                //     }
+                //     if is_open {
+                //         let mut test_plot = Box::new(super::plot::ContextMenus::default());
+                //         set_open(&mut self.open_windows, &group.handler.name(), is_open);
+                //         test_plot.show(ctx, &mut is_open, &group);
+                //     }
+                // }
             }
         });
     }
@@ -69,49 +72,65 @@ impl eframe::App for NWBView {
             // Process file when Open button is clicked
             if ui.button("Open file…").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
-                    self.picked_path = Some(path.display().to_string());
-                    self.dropped_files.clear();
+                    let picked_path = Some(path.display().to_string());
+                    // self.dropped_files.clear();
 
-                    if let Some(picked_path) = &self.picked_path {
-                        self.h5_path = Some(picked_path.to_string());
+                    if let Some(x) = &picked_path {
+                        // self.h5_path = Some(x.to_string());
+                        match hdf::read_nwb_file(&x.to_string()) {
+                            None => println!("Could not load {}", x),
+                            Some(i) => self.loaded_files.push(i),
+                        }
                     }
                 }
             }
 
-            if let Some(hdf_path) = &self.h5_path {
-                let h5_file = hdf::read_nwb_file(hdf_path).unwrap();
-                ui.horizontal(|ui| {
-                    ui.label("NWB Contents");
-                    self.create_group_recurision(&h5_file, ui, ctx);
-                });
+            for loaded_file in self.loaded_files.iter() {
+                println!("The file {} is loaded", loaded_file.file.filename());
+                for groups in &loaded_file.tree.groups {
+                    self.create_group_recursion(groups, ui, ctx);
+                    // println!("group name = {}", groups.handler.name());
+                    // println!("group name = {:?}", groups.datasets);
+                    // for sub_group in groups {
+                    //     println!("{}", groups.map(|x| x.handler.name()));
+                    // }
+                }
             }
 
-            if let Some(picked_path) = &self.picked_path {
-                ui.horizontal(|ui| {
-                    ui.label("Picked file:");
-                    ui.monospace(picked_path);
-                });
-            }
+            // if let Some(hdf_path) = &self.h5_path {
+            //     let h5_file = hdf::read_nwb_file(hdf_path).unwrap();
+            //     ui.horizontal(|ui| {
+            //         ui.label("NWB Contents");
+            //         self.create_group_recursion(&h5_file, ui, ctx);
+            //     });
+            // }
+
+            // if let Some(picked_path) = &self.picked_path {
+            //     ui.horizontal(|ui| {
+            //         ui.label("Picked file:");
+            //         ui.monospace(picked_path);
+            //     });
+            // }
 
             // Process dropped files (if any):
-            if !self.dropped_files.is_empty() {
-                ui.group(|ui| {
-                    ui.label("Dropped NWB files:");
+            // if !self.dropped_files.is_empty() {
+            //     ui.group(|ui| {
+            //         ui.label("Dropped NWB files:");
 
-                    for file in &self.dropped_files {
-                        let info = if let Some(path) = &file.path {
-                            path.display().to_string()
-                        } else if !file.name.is_empty() {
-                            file.name.clone()
-                        } else {
-                            "???".to_owned()
-                        };
-                        ui.label(&info);
-                        // self.h5_file = hdf::read_nwb_file(&info);
-                    }
-                });
-                self.picked_path = None;
-            }
+            //         for file in &self.dropped_files {
+            //             let info = if let Some(path) = &file.path {
+            //                 path.display().to_string()
+            //             } else if !file.name.is_empty() {
+            //                 file.name.clone()
+            //             } else {
+            //                 "???".to_owned()
+            //             };
+            //             ui.label(&info);
+            //             // self.h5_file = hdf::read_nwb_file(&info);
+            //         }
+            //     });
+            //     self.picked_path = None;
+            // }
 
             ui.horizontal(|ui| {
                 ui.label("Theme:");
@@ -123,7 +142,12 @@ impl eframe::App for NWBView {
 
         // Collect dropped files:
         if !ctx.input().raw.dropped_files.is_empty() {
-            self.dropped_files = ctx.input().raw.dropped_files.clone();
+            for file in ctx.input().raw.dropped_files.clone() {
+                match file.path {
+                    None => println!("Could not load the file!"),
+                    Some(x) => (self.loaded_files).push(hdf::read_nwb_file(&x.display().to_string()).unwrap()),
+                }
+            }
         }
     }
 }

@@ -1,19 +1,49 @@
 use hdf5::File;
 
-pub(crate) fn read_nwb_file(path: &str) -> Option<hdf5::File> {
-    match File::open(path) {
-        Err(_) => None,
-        Ok(hdf_file) => Some(hdf_file),
-    }
+pub struct GroupTree {
+    pub handler: hdf5::Group,
+    pub groups: Vec<GroupTree>,
+    pub datasets: Vec<String>,
 }
 
-// pub fn get_subgroups(group: &hdf5::Group) -> Vec<hdf5::Group> {
-//     group.groups().unwrap()
-// }
+pub struct FileTree {
+    pub file: hdf5::File,
+    pub tree: GroupTree,
+}
 
-// pub fn print_subgroups(group: &hdf5::Group) {
-//     let groups = get_subgroups(group);
-//     for subgroup in groups {
-//         println!("In get_subgroups for {}: {}", group.name(), subgroup.name());
-//     }
-// }
+pub(crate) fn build_tree(group: hdf5::Group) -> GroupTree {
+    let groups: Vec<hdf5::Group> = group.groups().unwrap();
+    let datasets: Vec<String> = group.datasets().unwrap().into_iter().map(|x| x.name()).collect();
+    let mut sub_trees: Vec<GroupTree> = Vec::new();
+    for sub_group in groups {
+        sub_trees.push(build_tree(sub_group));
+    }
+    let current_tree = GroupTree {
+        handler: group,
+        groups: sub_trees,
+        datasets: datasets,
+    };
+    return current_tree;
+}
+
+pub(crate) fn read_nwb_file(path: &str) -> Option<FileTree> {
+    let file = match File::open(path) {
+        Err(_) => None,
+        Ok(hdf_file) => Some(hdf_file),
+    };
+
+    match file {
+        None => None,
+        Some(x) => match x.as_group() {
+            Err(_) => None,
+            Ok(y) => {
+                Some(
+                    FileTree {
+                        file: x,
+                        tree: build_tree(y),
+                    }
+                )
+            },
+        },
+    }
+}
