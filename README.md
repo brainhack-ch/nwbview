@@ -59,6 +59,8 @@ The release flag builds the artifacts with optimizations. Do not specify it when
 
 All contributions are welcome and very much appreciated :)
 
+`nwbview` is currently in alpha version. Do not hesitate to create a new issue with your suggestions.
+
 We use Github's issue tracker, pull requests and the discussion interfaces for the contributions.
 
 The pull requests require the approval from a maintainer as well as the CI checks.
