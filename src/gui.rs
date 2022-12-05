@@ -16,7 +16,7 @@ pub(crate) struct NWBView {
 }
 
 impl NWBView {
-    fn create_group_recursion(&self, group: &hdf::GroupTree, ui: &mut Ui, ctx: &egui::Context) {
+    fn create_group_recursion(&mut self, group: &hdf::GroupTree, ui: &mut Ui, ctx: &egui::Context) {
         // println!("Group Starting {}",group.name());
         ui.collapsing(group.handler.name(), |ui| {
             let subgroups = &group.groups;
@@ -44,21 +44,21 @@ impl NWBView {
                     dataset_names.insert(dataset_name.to_string());
                     ui.monospace(dataset);
                 }
-                // if dataset_names.contains("data") && dataset_names.contains("timestamps") {
-                //     let mut is_open = self.open_windows.contains(&group.handler.name());
-                //     if ui.button("plot").clicked() {
-                //         println!("plotting");
-                //         print!("is_open: {}", is_open);
-                //         if !is_open {
-                //             is_open = true;
-                //         }
-                //     }
-                //     if is_open {
-                //         let mut test_plot = Box::new(super::plot::ContextMenus::default());
-                //         set_open(&mut self.open_windows, &group.handler.name(), is_open);
-                //         test_plot.show(ctx, &mut is_open, &group);
-                //     }
-                // }
+                if dataset_names.contains("data") && dataset_names.contains("timestamps") {
+                    let mut is_open = self.open_windows.contains(&group.handler.name());
+                    if ui.button("plot").clicked() {
+                        println!("plotting");
+                        print!("is_open: {}", is_open);
+                        if !is_open {
+                            is_open = true;
+                        }
+                    }
+                    if is_open {
+                        let mut test_plot = Box::new(super::plot::ContextMenus::default());
+                        set_open(&mut self.open_windows, &group.handler.name(), is_open);
+                        test_plot.show(ctx, &mut is_open, &group);
+                    }
+                }
             }
         });
     }
