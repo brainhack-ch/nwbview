@@ -20,7 +20,7 @@ impl NWBView {
             if !subgroups.is_empty() {
                 for subgroup in subgroups {
                     // println!("{}",subgroup.name());
-                    self.create_group_recursion(&subgroup, ui, ctx);
+                    self.create_group_recursion(subgroup, ui, ctx);
                 }
             }
 
@@ -53,7 +53,7 @@ impl NWBView {
                     if is_open {
                         let mut test_plot = Box::new(super::plot::ContextMenus::default());
                         set_open(&mut self.open_windows, &group.handler.name(), is_open);
-                        test_plot.show(ctx, &mut is_open, &group);
+                        test_plot.show(ctx, &mut is_open, group);
                     }
                 }
             }
@@ -86,7 +86,7 @@ impl eframe::App for NWBView {
             for loaded_file in &all_loaded_files {
                 println!("The file {} is loaded", loaded_file.file.filename());
                 for groups in &loaded_file.tree.groups {
-                    self.create_group_recursion(&groups, ui, ctx);
+                    self.create_group_recursion(groups, ui, ctx);
                 }
             }
 
@@ -140,7 +140,8 @@ impl eframe::App for NWBView {
             for file in ctx.input().raw.dropped_files.clone() {
                 match file.path {
                     None => println!("Could not load the file!"),
-                    Some(x) => (self.loaded_files).push(hdf::read_nwb_file(&x.display().to_string()).unwrap()),
+                    Some(x) => (self.loaded_files)
+                        .push(hdf::read_nwb_file(&x.display().to_string()).unwrap()),
                 }
             }
         }

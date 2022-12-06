@@ -51,7 +51,7 @@ impl Demo for ContextMenus {
             .vscroll(false)
             .resizable(false)
             .open(open)
-            .show(ctx, |ui| self.ui(ui, &hdf5_group));
+            .show(ctx, |ui| self.ui(ui, hdf5_group));
     }
 }
 
@@ -61,19 +61,25 @@ impl View for ContextMenus {
 
         ui.label("Zoom in zoom out using mouse.");
         ui.horizontal(|ui| {
-            self.example_plot(ui, &hdf5_group).context_menu(|_ui| {});
+            self.example_plot(ui, hdf5_group).context_menu(|_ui| {});
         });
     }
 }
 
 impl ContextMenus {
     fn example_plot(&self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) -> egui::Response {
-        let x_data: Vec<f64> = hdf5_group.handler
+        let x_data: Vec<f64> = hdf5_group
+            .handler
             .dataset("timestamps")
             .unwrap()
             .read_raw()
             .unwrap();
-        let y_data: Vec<f64> = hdf5_group.handler.dataset("data").unwrap().read_raw().unwrap();
+        let y_data: Vec<f64> = hdf5_group
+            .handler
+            .dataset("data")
+            .unwrap()
+            .read_raw()
+            .unwrap();
         use egui::plot::{Line, PlotPoints};
         let n = x_data.len() - 1;
         let step_size: usize = if n > 10000 {

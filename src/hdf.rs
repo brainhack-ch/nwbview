@@ -13,17 +13,21 @@ pub struct FileTree {
 
 pub(crate) fn build_tree(group: hdf5::Group) -> GroupTree {
     let groups: Vec<hdf5::Group> = group.groups().unwrap();
-    let datasets: Vec<String> = group.datasets().unwrap().into_iter().map(|x| x.name()).collect();
+    let datasets: Vec<String> = group
+        .datasets()
+        .unwrap()
+        .into_iter()
+        .map(|x| x.name())
+        .collect();
     let mut sub_trees: Vec<GroupTree> = Vec::new();
     for sub_group in groups {
         sub_trees.push(build_tree(sub_group));
     }
-    let current_tree = GroupTree {
+    GroupTree {
         handler: group,
         groups: sub_trees,
-        datasets: datasets,
-    };
-    return current_tree;
+        datasets,
+    }
 }
 
 pub(crate) fn read_nwb_file(path: &str) -> Option<FileTree> {
@@ -36,14 +40,10 @@ pub(crate) fn read_nwb_file(path: &str) -> Option<FileTree> {
         None => None,
         Some(x) => match x.as_group() {
             Err(_) => None,
-            Ok(y) => {
-                Some(
-                    FileTree {
-                        file: x,
-                        tree: build_tree(y),
-                    }
-                )
-            },
+            Ok(y) => Some(FileTree {
+                file: x,
+                tree: build_tree(y),
+            }),
         },
     }
 }
