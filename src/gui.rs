@@ -1,18 +1,15 @@
 use std::collections::BTreeSet;
+use std::mem;
 
 use crate::gui::egui::Ui;
 use crate::hdf;
 use crate::plot::Demo;
 use eframe::egui;
 
-// use eframe::egui::containers::CollapsingHeader;
 #[derive(Default)]
 pub(crate) struct NWBView {
     pub loaded_files: Vec<hdf::FileTree>,
     pub open_windows: BTreeSet<String>,
-    // dropped_files: Vec<egui::DroppedFile>,
-    // picked_path: Option<String>,
-    // h5_path: Option<String>,
 }
 
 impl NWBView {
@@ -73,10 +70,8 @@ impl eframe::App for NWBView {
             if ui.button("Open file…").clicked() {
                 if let Some(path) = rfd::FileDialog::new().pick_file() {
                     let picked_path = Some(path.display().to_string());
-                    // self.dropped_files.clear();
 
                     if let Some(x) = &picked_path {
-                        // self.h5_path = Some(x.to_string());
                         match hdf::read_nwb_file(&x.to_string()) {
                             None => println!("Could not load {}", x),
                             Some(i) => self.loaded_files.push(i),
@@ -85,17 +80,17 @@ impl eframe::App for NWBView {
                 }
             }
 
-            for loaded_file in self.loaded_files.iter() {
+            let mut all_loaded_files: Vec<hdf::FileTree> = Vec::new();
+            mem::swap(&mut all_loaded_files, &mut self.loaded_files);
+
+            for loaded_file in &all_loaded_files {
                 println!("The file {} is loaded", loaded_file.file.filename());
                 for groups in &loaded_file.tree.groups {
-                    self.create_group_recursion(groups, ui, ctx);
-                    // println!("group name = {}", groups.handler.name());
-                    // println!("group name = {:?}", groups.datasets);
-                    // for sub_group in groups {
-                    //     println!("{}", groups.map(|x| x.handler.name()));
-                    // }
+                    self.create_group_recursion(&groups, ui, ctx);
                 }
             }
+
+            mem::swap(&mut all_loaded_files, &mut self.loaded_files);
 
             // if let Some(hdf_path) = &self.h5_path {
             //     let h5_file = hdf::read_nwb_file(hdf_path).unwrap();
