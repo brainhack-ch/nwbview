@@ -140,8 +140,10 @@ impl eframe::App for NWBView {
             for file in ctx.input().raw.dropped_files.clone() {
                 match file.path {
                     None => println!("Could not load the file!"),
-                    Some(x) => (self.loaded_files)
-                        .push(hdf::read_nwb_file(&x.display().to_string()).unwrap()),
+                    Some(x) => match hdf::read_nwb_file(&x.display().to_string()) {
+                        None => println!("Could not load the file '{}'!", x.display()),
+                        Some(i) => self.loaded_files.push(i),
+                    },
                 }
             }
         }
