@@ -1,5 +1,3 @@
-use hdf5::File;
-
 #[cfg(test)]
 #[path = "../src/hdf.rs"]
 mod hdf;
@@ -21,7 +19,7 @@ fn read_invalid_file() {
 fn get_subgroups_from_file() {
     let input_file =
         hdf::read_nwb_file("data/sub-anm266951_ses-20141201_behavior+icephys+ogen.nwb");
-    let groups = input_file.unwrap().groups().unwrap();
+    let groups = input_file.unwrap().tree.groups;
     let expected_groups: Vec<String> = vec![
         "/acquisition".to_string(),
         "/analysis".to_string(),
@@ -32,6 +30,6 @@ fn get_subgroups_from_file() {
         "/stimulus".to_string(),
     ];
     for group in groups.iter().zip(expected_groups.iter()) {
-        assert_eq!(group.0.name(), *group.1);
+        assert_eq!(group.0.handler.name(), *group.1);
     }
 }
