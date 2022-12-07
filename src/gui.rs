@@ -46,7 +46,6 @@ impl NWBView {
             let subgroups = &group.groups;
             if !subgroups.is_empty() {
                 for subgroup in subgroups {
-                    // println!("{}",subgroup.name());
                     self.create_group_recursion(subgroup, ui, ctx);
                 }
             }
@@ -55,14 +54,7 @@ impl NWBView {
             let mut dataset_names: BTreeSet<String> = BTreeSet::default();
             if !datasets.is_empty() {
                 for dataset in datasets {
-                    // let mut is_open = self.open_windows.contains(&dataset.name());
-                    // ui.checkbox(&mut is_open, &dataset.name());
-                    // set_open(&mut self.open_windows, &dataset.name().to_string(), is_open);
-                    // let full_dataset_name = dataset.name().to_string();
-                    // split string name by "/"
-                    // let full_dataset_name = dataset;
                     let split_name: Vec<&str> = dataset.split('/').collect();
-                    // let split_name: Vec<&str> = full_dataset_name.split('/').collect();
                     // get the last element of the split string
                     let dataset_name = split_name.last().unwrap();
                     dataset_names.insert(dataset_name.to_string());
@@ -115,41 +107,6 @@ impl eframe::App for NWBView {
             }
 
             mem::swap(&mut all_loaded_files, &mut self.loaded_files);
-
-            // if let Some(hdf_path) = &self.h5_path {
-            //     let h5_file = hdf::read_nwb_file(hdf_path).unwrap();
-            //     ui.horizontal(|ui| {
-            //         ui.label("NWB Contents");
-            //         self.create_group_recursion(&h5_file, ui, ctx);
-            //     });
-            // }
-
-            // if let Some(picked_path) = &self.picked_path {
-            //     ui.horizontal(|ui| {
-            //         ui.label("Picked file:");
-            //         ui.monospace(picked_path);
-            //     });
-            // }
-
-            // Process dropped files (if any):
-            // if !self.dropped_files.is_empty() {
-            //     ui.group(|ui| {
-            //         ui.label("Dropped NWB files:");
-
-            //         for file in &self.dropped_files {
-            //             let info = if let Some(path) = &file.path {
-            //                 path.display().to_string()
-            //             } else if !file.name.is_empty() {
-            //                 file.name.clone()
-            //             } else {
-            //                 "???".to_owned()
-            //             };
-            //             ui.label(&info);
-            //             // self.h5_file = hdf::read_nwb_file(&info);
-            //         }
-            //     });
-            //     self.picked_path = None;
-            // }
 
             ui.horizontal(|ui| {
                 ui.label("Theme:");
