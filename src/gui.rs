@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 use std::mem;
+use std::path::Path;
 
 use crate::gui::egui::Ui;
 use crate::hdf;
@@ -10,6 +11,32 @@ use eframe::egui;
 pub(crate) struct NWBView {
     pub loaded_files: Vec<hdf::FileTree>,
     pub open_windows: BTreeSet<String>,
+}
+
+impl NWBView {
+    fn add_file(&mut self, path: String) {
+        let input_path = Path::new(&path);
+        let actual_path = match input_path.canonicalize() {
+            Err(_) => {
+                println!("Could not load the file '{}'!", path);
+                return;
+            }
+            Ok(x) => x,
+        };
+
+        for i in &self.loaded_files {
+            let loaded_path = Path::new(&i.file.filename()).canonicalize().unwrap();
+
+            if loaded_path == actual_path {
+                println!("The file '{}' is already loaded!", path);
+                return;
+            }
+        }
+        match hdf::read_nwb_file(&path) {
+            None => println!("Could not load {}", path),
+            Some(i) => self.loaded_files.push(i),
+        }
+    }
 }
 
 impl NWBView {
@@ -72,10 +99,7 @@ impl eframe::App for NWBView {
                     let picked_path = Some(path.display().to_string());
 
                     if let Some(x) = &picked_path {
-                        match hdf::read_nwb_file(&x.to_string()) {
-                            None => println!("Could not load {}", x),
-                            Some(i) => self.loaded_files.push(i),
-                        }
+                        self.add_file(x.to_string());
                     }
                 }
             }
@@ -140,10 +164,7 @@ impl eframe::App for NWBView {
             for file in ctx.input().raw.dropped_files.clone() {
                 match file.path {
                     None => println!("Could not load the file!"),
-                    Some(x) => match hdf::read_nwb_file(&x.display().to_string()) {
-                        None => println!("Could not load the file '{}'!", x.display()),
-                        Some(i) => self.loaded_files.push(i),
-                    },
+                    Some(x) => self.add_file(x.display().to_string()),
                 }
             }
         }
