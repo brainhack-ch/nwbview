@@ -105,8 +105,14 @@ impl eframe::App for NWBView {
                 for loaded_file in all_loaded_files.iter_mut() {
                     sub_ui.collapsing(loaded_file.file.filename(), |header_ui| {
                         println!("The file {} is loaded", loaded_file.file.filename());
-                        if header_ui.button(RichText::new("close file").color(header_ui.visuals().warn_fg_color)).clicked() {
-                            loaded_file.is_opened = false;  // Mark the file as closed
+                        if header_ui
+                            .button(
+                                RichText::new("close file")
+                                    .color(header_ui.visuals().warn_fg_color),
+                            )
+                            .clicked()
+                        {
+                            loaded_file.is_opened = false; // Mark the file as closed
                         } else {
                             for groups in &loaded_file.tree.groups {
                                 self.create_group_recursion(groups, header_ui, ctx);
@@ -116,7 +122,7 @@ impl eframe::App for NWBView {
                 }
             });
 
-            all_loaded_files.retain(|x| x.is_opened);  // Remove closed files
+            all_loaded_files.retain(|x| x.is_opened); // Remove closed files
             mem::swap(&mut all_loaded_files, &mut self.loaded_files);
 
             ui.horizontal(|ui| {
