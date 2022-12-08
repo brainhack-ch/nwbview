@@ -9,6 +9,7 @@ pub struct GroupTree {
 pub struct FileTree {
     pub file: hdf5::File,
     pub tree: GroupTree,
+    pub is_opened: bool,
 }
 
 pub(crate) fn build_tree(group: hdf5::Group) -> GroupTree {
@@ -43,6 +44,7 @@ pub(crate) fn read_nwb_file(path: &str) -> Option<FileTree> {
             Ok(y) => Some(FileTree {
                 file: x,
                 tree: build_tree(y),
+                is_opened: true,
             }),
         },
     }

@@ -6,6 +6,7 @@ use crate::gui::egui::Ui;
 use crate::hdf;
 use crate::plot::Demo;
 use eframe::egui;
+use eframe::egui::RichText;
 
 #[derive(Default)]
 pub(crate) struct NWBView {
@@ -101,16 +102,22 @@ impl eframe::App for NWBView {
             mem::swap(&mut all_loaded_files, &mut self.loaded_files);
 
             egui::ScrollArea::vertical().show(ui, |sub_ui| {
-                for loaded_file in &all_loaded_files {
-                    sub_ui.collapsing(loaded_file.file.filename(), |header_ui| {
-                        println!("The file {} is loaded", loaded_file.file.filename());
-                        for groups in &loaded_file.tree.groups {
-                            self.create_group_recursion(groups, header_ui, ctx);
-                        }
+                for loaded_file in all_loaded_files.iter_mut() {
+                    sub_ui.horizontal(|horizontal_ui| {
+                        if horizontal_ui.button(RichText::new("❌")).clicked() {
+                            loaded_file.is_opened = false; // Mark the file as closed
+                        };
+                        horizontal_ui.collapsing(loaded_file.file.filename(), |header_ui| {
+                            println!("The file {} is loaded", loaded_file.file.filename());
+                            for groups in &loaded_file.tree.groups {
+                                self.create_group_recursion(groups, header_ui, ctx);
+                            }
+                        });
                     });
                 }
             });
 
+            all_loaded_files.retain(|x| x.is_opened); // Remove closed files
             mem::swap(&mut all_loaded_files, &mut self.loaded_files);
 
             ui.horizontal(|ui| {
