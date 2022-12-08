@@ -41,8 +41,9 @@ impl NWBView {
 
 impl NWBView {
     fn create_group_recursion(&mut self, group: &hdf::GroupTree, ui: &mut Ui, ctx: &egui::Context) {
-        // println!("Group Starting {}",group.name());
-        ui.collapsing(group.handler.name(), |ui| {
+        let group_name = group.handler.name();
+        let group_split_name: Vec<&str> = group_name.split('/').collect();
+        ui.collapsing(*group_split_name.last().unwrap(), |ui| {
             let subgroups = &group.groups;
             if !subgroups.is_empty() {
                 for subgroup in subgroups {
@@ -55,10 +56,10 @@ impl NWBView {
             if !datasets.is_empty() {
                 for dataset in datasets {
                     let split_name: Vec<&str> = dataset.split('/').collect();
-                    // get the last element of the split string
+                    println!("split_name = {:?}", split_name);
                     let dataset_name = split_name.last().unwrap();
                     dataset_names.insert(dataset_name.to_string());
-                    ui.monospace(dataset);
+                    ui.monospace(dataset_name.to_string());
                 }
                 if dataset_names.contains("data") && dataset_names.contains("timestamps") {
                     let mut is_open = self.open_windows.contains(&group.handler.name());
@@ -71,8 +72,8 @@ impl NWBView {
                     }
                     if is_open {
                         let mut test_plot = Box::new(super::plot::ContextMenus::default());
-                        set_open(&mut self.open_windows, &group.handler.name(), is_open);
                         test_plot.show(ctx, &mut is_open, group);
+                        set_open(&mut self.open_windows, &group.handler.name(), is_open);
                     }
                 }
             }
@@ -99,12 +100,16 @@ impl eframe::App for NWBView {
             let mut all_loaded_files: Vec<hdf::FileTree> = Vec::new();
             mem::swap(&mut all_loaded_files, &mut self.loaded_files);
 
-            for loaded_file in &all_loaded_files {
-                println!("The file {} is loaded", loaded_file.file.filename());
-                for groups in &loaded_file.tree.groups {
-                    self.create_group_recursion(groups, ui, ctx);
+            egui::ScrollArea::vertical().show(ui, |sub_ui| {
+                for loaded_file in &all_loaded_files {
+                    sub_ui.collapsing(loaded_file.file.filename(), |header_ui| {
+                        println!("The file {} is loaded", loaded_file.file.filename());
+                        for groups in &loaded_file.tree.groups {
+                            self.create_group_recursion(groups, header_ui, ctx);
+                        }
+                    });
                 }
-            }
+            });
 
             mem::swap(&mut all_loaded_files, &mut self.loaded_files);
 
