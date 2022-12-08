@@ -103,21 +103,16 @@ impl eframe::App for NWBView {
 
             egui::ScrollArea::vertical().show(ui, |sub_ui| {
                 for loaded_file in all_loaded_files.iter_mut() {
-                    sub_ui.collapsing(loaded_file.file.filename(), |header_ui| {
-                        println!("The file {} is loaded", loaded_file.file.filename());
-                        if header_ui
-                            .button(
-                                RichText::new("close file")
-                                    .color(header_ui.visuals().warn_fg_color),
-                            )
-                            .clicked()
-                        {
+                    sub_ui.horizontal(|horizontal_ui| {
+                        if horizontal_ui.button(RichText::new("❌")).clicked() {
                             loaded_file.is_opened = false; // Mark the file as closed
-                        } else {
+                        };
+                        horizontal_ui.collapsing(loaded_file.file.filename(), |header_ui| {
+                            println!("The file {} is loaded", loaded_file.file.filename());
                             for groups in &loaded_file.tree.groups {
                                 self.create_group_recursion(groups, header_ui, ctx);
                             }
-                        }
+                        });
                     });
                 }
             });
