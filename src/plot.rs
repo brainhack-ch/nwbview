@@ -15,7 +15,7 @@ pub trait PopupWindow {
 
 #[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub struct ContextMenus {
+pub struct PlotWindow {
     show_axes: [bool; 2],
     allow_drag: bool,
     allow_zoom: bool,
@@ -26,7 +26,7 @@ pub struct ContextMenus {
     height: f32,
 }
 
-impl Default for ContextMenus {
+impl Default for PlotWindow {
     fn default() -> Self {
         Self {
             show_axes: [true, true],
@@ -41,7 +41,7 @@ impl Default for ContextMenus {
     }
 }
 
-impl PopupWindow for ContextMenus {
+impl PopupWindow for PlotWindow {
     fn name(&self) -> &'static str {
         "☰ Context Menus"
     }
@@ -55,7 +55,7 @@ impl PopupWindow for ContextMenus {
     }
 }
 
-impl View for ContextMenus {
+impl View for PlotWindow {
     fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) {
         ui.separator();
 
@@ -66,7 +66,7 @@ impl View for ContextMenus {
     }
 }
 
-impl ContextMenus {
+impl PlotWindow {
     fn example_plot(&self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) -> egui::Response {
         let x_data: Vec<f64> = hdf5_group
             .handler
