@@ -4,7 +4,7 @@ use std::path::Path;
 
 use crate::gui::egui::Ui;
 use crate::hdf;
-use crate::plot::PopupWindow;
+use crate::plot::Popup;
 use eframe::egui;
 use eframe::egui::RichText;
 
