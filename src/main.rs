@@ -11,6 +11,6 @@ fn main() {
     eframe::run_native(
         "NWB View",
         options,
-        Box::new(|_cc| Box::new(NWBView::default())),
+        Box::new(|_cc| Box::<NWBView>::default()),
     );
 }
