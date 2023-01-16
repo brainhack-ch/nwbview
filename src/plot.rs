@@ -61,13 +61,13 @@ impl View for PlotWindow {
 
         ui.label("Zoom in zoom out using ctrl+mouse.");
         ui.horizontal(|ui| {
-            self.example_plot(ui, hdf5_group).context_menu(|_ui| {});
+            self.trace_plot(ui, hdf5_group).context_menu(|_ui| {});
         });
     }
 }
 
 impl PlotWindow {
-    fn example_plot(&self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) -> egui::Response {
+    fn trace_plot(&self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) -> egui::Response {
         let x_data: Vec<f64> = hdf5_group
             .handler
             .dataset("timestamps")
@@ -89,7 +89,7 @@ impl PlotWindow {
                 .map(|i| [x_data[i], y_data[i]])
                 .collect::<PlotPoints>(),
         );
-        egui::plot::Plot::new("example_plot")
+        egui::plot::Plot::new("trace_plot")
             .show_axes(self.show_axes)
             .allow_drag(self.allow_drag)
             .allow_zoom(self.allow_zoom)
@@ -103,7 +103,6 @@ impl PlotWindow {
             .response
     }
 }
-
 
 /// Compute the step size for the plot
 fn compute_step_size(n: usize) -> usize {
