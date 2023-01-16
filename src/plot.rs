@@ -82,12 +82,7 @@ impl ContextMenus {
             .unwrap();
         use egui::plot::{Line, PlotPoints};
         let n = x_data.len() - 1;
-        let step_size: usize = if n > 10000 {
-            let log_n = (n as f64).log(10.0).ceil().powi(3);
-            log_n as usize
-        } else {
-            1
-        };
+        let step_size = compute_step_size(n);
         let line = Line::new(
             (0..=n)
                 .step_by(step_size)
@@ -107,4 +102,16 @@ impl ContextMenus {
             .show(ui, |plot_ui| plot_ui.line(line))
             .response
     }
+}
+
+
+/// Compute the step size for the plot
+fn compute_step_size(n: usize) -> usize {
+    let step_size: usize = if n > 10000 {
+        let log_n = (n as f64).log(10.0).ceil().powi(3);
+        log_n as usize
+    } else {
+        1
+    };
+    step_size
 }
