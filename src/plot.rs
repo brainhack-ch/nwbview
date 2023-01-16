@@ -59,7 +59,7 @@ impl View for ContextMenus {
     fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) {
         ui.separator();
 
-        ui.label("Zoom in zoom out using mouse.");
+        ui.label("Zoom in zoom out using ctrl+mouse.");
         ui.horizontal(|ui| {
             self.example_plot(ui, hdf5_group).context_menu(|_ui| {});
         });
