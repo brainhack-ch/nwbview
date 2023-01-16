@@ -5,7 +5,7 @@ pub trait View {
     fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree);
 }
 
-pub trait Demo {
+pub trait PopupWindow {
     /// `&'static` so we can also use it as a key to store open/close state.
     fn name(&self) -> &'static str;
 
@@ -41,7 +41,7 @@ impl Default for ContextMenus {
     }
 }
 
-impl Demo for ContextMenus {
+impl PopupWindow for ContextMenus {
     fn name(&self) -> &'static str {
         "☰ Context Menus"
     }
