@@ -5,7 +5,7 @@ pub trait View {
     fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree);
 }
 
-pub trait Demo {
+pub trait Popup {
     /// `&'static` so we can also use it as a key to store open/close state.
     fn name(&self) -> &'static str;
 
@@ -15,7 +15,7 @@ pub trait Demo {
 
 #[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub struct ContextMenus {
+pub struct PlotWindow {
     show_axes: [bool; 2],
     allow_drag: bool,
     allow_zoom: bool,
@@ -26,7 +26,7 @@ pub struct ContextMenus {
     height: f32,
 }
 
-impl Default for ContextMenus {
+impl Default for PlotWindow {
     fn default() -> Self {
         Self {
             show_axes: [true, true],
@@ -41,7 +41,7 @@ impl Default for ContextMenus {
     }
 }
 
-impl Demo for ContextMenus {
+impl Popup for PlotWindow {
     fn name(&self) -> &'static str {
         "☰ Context Menus"
     }
@@ -55,19 +55,19 @@ impl Demo for ContextMenus {
     }
 }
 
-impl View for ContextMenus {
+impl View for PlotWindow {
     fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) {
         ui.separator();
 
-        ui.label("Zoom in zoom out using mouse.");
+        ui.label("Zoom in zoom out using ctrl+mouse.");
         ui.horizontal(|ui| {
-            self.example_plot(ui, hdf5_group).context_menu(|_ui| {});
+            self.trace_plot(ui, hdf5_group).context_menu(|_ui| {});
         });
     }
 }
 
-impl ContextMenus {
-    fn example_plot(&self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) -> egui::Response {
+impl PlotWindow {
+    fn trace_plot(&self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) -> egui::Response {
         let x_data: Vec<f64> = hdf5_group
             .handler
             .dataset("timestamps")
@@ -82,19 +82,14 @@ impl ContextMenus {
             .unwrap();
         use egui::plot::{Line, PlotPoints};
         let n = x_data.len() - 1;
-        let step_size: usize = if n > 10000 {
-            let log_n = (n as f64).log(10.0).ceil().powi(3);
-            log_n as usize
-        } else {
-            1
-        };
+        let step_size = compute_step_size(n);
         let line = Line::new(
             (0..=n)
                 .step_by(step_size)
                 .map(|i| [x_data[i], y_data[i]])
                 .collect::<PlotPoints>(),
         );
-        egui::plot::Plot::new("example_plot")
+        egui::plot::Plot::new("trace_plot")
             .show_axes(self.show_axes)
             .allow_drag(self.allow_drag)
             .allow_zoom(self.allow_zoom)
@@ -107,4 +102,15 @@ impl ContextMenus {
             .show(ui, |plot_ui| plot_ui.line(line))
             .response
     }
+}
+
+/// Compute the step size for the plot
+fn compute_step_size(n: usize) -> usize {
+    let step_size: usize = if n > 10000 {
+        let log_n = (n as f64).log(10.0).ceil().powi(3);
+        log_n as usize
+    } else {
+        1
+    };
+    step_size
 }

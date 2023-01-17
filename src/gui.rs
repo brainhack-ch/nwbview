@@ -4,7 +4,7 @@ use std::path::Path;
 
 use crate::gui::egui::Ui;
 use crate::hdf;
-use crate::plot::Demo;
+use crate::plot::Popup;
 use eframe::egui;
 use eframe::egui::RichText;
 
@@ -72,7 +72,7 @@ impl NWBView {
                         }
                     }
                     if is_open {
-                        let mut test_plot = Box::new(super::plot::ContextMenus::default());
+                        let mut test_plot = Box::<super::plot::PlotWindow>::default();
                         test_plot.show(ctx, &mut is_open, group);
                         set_open(&mut self.open_windows, &group.handler.name(), is_open);
                     }
