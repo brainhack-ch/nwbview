@@ -5,6 +5,7 @@ use std::path::Path;
 use crate::gui::egui::Ui;
 use crate::hdf;
 use crate::plot::Popup;
+use crate::table::PopupTable;
 use eframe::egui;
 use eframe::egui::RichText;
 
@@ -74,7 +75,13 @@ impl NWBView {
                                 .read_raw()
                                 .unwrap();
                             let n = x_data.len() - 1;
-                            horizontal_ui.monospace(format!("size={}", n));
+                            if n > 0 {
+                                let mut table_box = Box::<super::table::TableWindow>::default();
+                                let mut state = true;
+                                table_box.show(ctx, &mut state);
+                            } else {
+                                horizontal_ui.monospace(format!("size={}", n));
+                            }
                         }
                     });
                 }

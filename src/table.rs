@@ -1,6 +1,21 @@
+use eframe::egui;
+
+pub trait View {
+    fn ui(&mut self, ui: &mut egui::Ui);
+}
+
+/// Something to view
+pub trait PopupTable {
+    /// `&'static` so we can also use it as a key to store open/close state.
+    fn name(&self) -> &'static str;
+
+    /// Show windows, etc
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool);
+}
+
 /// Shows off a table with dynamic layout
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub struct TableDemo {
+pub struct TableWindow {
     striped: bool,
     resizable: bool,
     num_rows: usize,
@@ -8,7 +23,7 @@ pub struct TableDemo {
     scroll_to_row: Option<usize>,
 }
 
-impl Default for TableDemo {
+impl Default for TableWindow {
     fn default() -> Self {
         Self {
             striped: true,
@@ -20,9 +35,9 @@ impl Default for TableDemo {
     }
 }
 
-impl super::Demo for TableDemo {
+impl PopupTable for TableWindow {
     fn name(&self) -> &'static str {
-        "☰ Table Demo"
+        "☰ Table Window"
     }
 
     fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
@@ -31,13 +46,13 @@ impl super::Demo for TableDemo {
             .resizable(true)
             .default_width(400.0)
             .show(ctx, |ui| {
-                use super::View as _;
+                use View as _;
                 self.ui(ui);
             });
     }
 }
 
-impl super::View for TableDemo {
+impl View for TableWindow {
     fn ui(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
@@ -67,7 +82,7 @@ impl super::View for TableDemo {
     }
 }
 
-impl TableDemo {
+impl TableWindow {
     fn table_ui(&mut self, ui: &mut egui::Ui) {
         use egui_extras::{Column, TableBuilder};
 
