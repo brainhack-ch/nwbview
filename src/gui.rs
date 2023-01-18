@@ -60,7 +60,7 @@ impl NWBView {
                     let split_name: Vec<&str> = dataset.split('/').collect();
                     println!("split_name = {:?}", split_name);
                     let dataset_name = split_name.last().unwrap();
-                    let mut is_open = self.open_windows.contains(&group.handler.name());
+                    let mut is_open = self.open_windows.contains(&dataset_name.to_string());
                     dataset_names.insert(dataset_name.to_string());
                     ui.horizontal(|horizontal_ui| {
                         horizontal_ui.monospace(dataset_name.to_string());
@@ -77,8 +77,12 @@ impl NWBView {
                             let n = x_data.len() - 1;
                             if n > 0 {
                                 let mut table_box = Box::<super::table::TableWindow>::default();
-                                let mut state = true;
-                                table_box.show(ctx, &mut state);
+                                table_box.show(ctx, &mut is_open);
+                                set_open(
+                                    &mut self.open_windows,
+                                    &dataset_name.to_string(),
+                                    is_open,
+                                );
                             } else {
                                 horizontal_ui.monospace(format!("size={}", n));
                             }
