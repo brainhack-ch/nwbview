@@ -59,12 +59,33 @@ impl NWBView {
                     let split_name: Vec<&str> = dataset.split('/').collect();
                     println!("split_name = {:?}", split_name);
                     let dataset_name = split_name.last().unwrap();
+                    let mut is_open = self.open_windows.contains(&group.handler.name());
                     dataset_names.insert(dataset_name.to_string());
-                    ui.monospace(dataset_name.to_string());
+                    ui.horizontal(|horizontal_ui| {
+                        horizontal_ui.monospace(dataset_name.to_string());
+                        if horizontal_ui.button(RichText::new("☰")).clicked()
+                        {
+                            if !is_open {
+                                is_open = true;
+                            }
+                        }
+                        if is_open {
+                            let x_data: Vec<f64> = group
+                            .handler
+                            .dataset(&dataset_name.to_string())
+                            .unwrap()
+                            .read_raw()
+                            .unwrap();
+                            let n = x_data.len() - 1;
+                            horizontal_ui.monospace(format!("size={}", n));
+
+                        }
+                    });
+                    
                 }
                 if dataset_names.contains("data") && dataset_names.contains("timestamps") {
                     let mut is_open = self.open_windows.contains(&group.handler.name());
-                    if ui.button("plot").clicked() {
+                    if ui.button(RichText::new(" 🗠 Plot")).clicked() {
                         println!("plotting");
                         print!("is_open: {}", is_open);
                         if !is_open {
