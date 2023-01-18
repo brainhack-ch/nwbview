@@ -7,7 +7,9 @@ pub trait View {
 /// Something to view
 pub trait PopupTable {
     /// `&'static` so we can also use it as a key to store open/close state.
-    fn name(&self) -> &'static str;
+    fn name(&self) -> String;
+
+    fn set_name(&mut self, name: String);
 
     /// Show windows, etc
     fn show(&mut self, ctx: &egui::Context, open: &mut bool);
@@ -16,28 +18,32 @@ pub trait PopupTable {
 /// Shows off a table with dynamic layout
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct TableWindow {
+    name: String,
     striped: bool,
     resizable: bool,
     num_rows: usize,
-    scroll_to_row_slider: usize,
     scroll_to_row: Option<usize>,
 }
 
 impl Default for TableWindow {
     fn default() -> Self {
         Self {
+            name: "☰ Table Window".to_owned(),
             striped: true,
             resizable: true,
             num_rows: 300_000,
-            scroll_to_row_slider: 0,
             scroll_to_row: None,
         }
     }
 }
 
 impl PopupTable for TableWindow {
-    fn name(&self) -> &'static str {
-        "☰ Table Window"
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn set_name(&mut self, name: String) {
+        self.name = name;
     }
 
     fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
