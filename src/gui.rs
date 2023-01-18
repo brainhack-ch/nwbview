@@ -63,23 +63,20 @@ impl NWBView {
                     dataset_names.insert(dataset_name.to_string());
                     ui.horizontal(|horizontal_ui| {
                         horizontal_ui.monospace(dataset_name.to_string());
-                        if horizontal_ui.button(RichText::new("☰")).clicked() && !is_open
-                        {
+                        if horizontal_ui.button(RichText::new("☰")).clicked() && !is_open {
                             is_open = true;
                         };
                         if is_open {
                             let x_data: Vec<f64> = group
-                            .handler
-                            .dataset(dataset_name.as_ref())
-                            .unwrap()
-                            .read_raw()
-                            .unwrap();
+                                .handler
+                                .dataset(dataset_name.as_ref())
+                                .unwrap()
+                                .read_raw()
+                                .unwrap();
                             let n = x_data.len() - 1;
                             horizontal_ui.monospace(format!("size={}", n));
-
                         }
                     });
-                    
                 }
                 if dataset_names.contains("data") && dataset_names.contains("timestamps") {
                     let mut is_open = self.open_windows.contains(&group.handler.name());
