@@ -115,8 +115,9 @@ impl<T: std::fmt::Display> TableWindow<T> {
                         ui.label(row_index.to_string());
                     });
                     row.col(|ui| {
-                        let value = get_item_at_index(&self.data, row_index);
-                        ui.label(value);
+                        let item = &self.data[row_index];
+                        let item_str = format!("{}", item);
+                        ui.label(item_str);
                     });
                     row.col(|ui| {
                         ui.add(egui::Label::new("Thousands of rows of even height").wrap(false));
@@ -126,11 +127,6 @@ impl<T: std::fmt::Display> TableWindow<T> {
     }
 }
 
-fn get_item_at_index<T: std::fmt::Display>(data: &Vec<T>, idx: usize) -> String {
-    let item = &data[idx];
-    let item_str = format!("{}", item);
-    item_str
-}
 
 fn long_text(row_index: usize) -> String {
     format!("Row {row_index} has some long text that you may want to clip, or it will take up too much horizontal space!")
