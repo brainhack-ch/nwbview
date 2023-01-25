@@ -1,4 +1,5 @@
 use eframe::egui;
+use egui_extras::{Column, Size, StripBuilder, TableBuilder};
 
 pub trait View {
     fn ui(&mut self, ui: &mut egui::Ui);
@@ -19,20 +20,14 @@ pub trait PopupTable {
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct TableWindow {
     name: String,
-    striped: bool,
-    resizable: bool,
     num_rows: usize,
-    scroll_to_row: Option<usize>,
 }
 
 impl Default for TableWindow {
     fn default() -> Self {
         Self {
             name: "☰ Table Window".to_owned(),
-            striped: true,
-            resizable: true,
             num_rows: 300_000,
-            scroll_to_row: None,
         }
     }
 }
@@ -60,22 +55,6 @@ impl PopupTable for TableWindow {
 
 impl View for TableWindow {
     fn ui(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                ui.checkbox(&mut self.striped, "Striped");
-                ui.checkbox(&mut self.resizable, "Resizable columns");
-            });
-
-            ui.add(
-                egui::Slider::new(&mut self.num_rows, 0..=100_000)
-                    .logarithmic(true)
-                    .text("Num rows"),
-            );
-        });
-
-        ui.separator();
-
-        use egui_extras::{Size, StripBuilder};
         StripBuilder::new(ui)
             .size(Size::remainder().at_least(100.0)) // for the table
             .vertical(|mut strip| {
@@ -90,35 +69,35 @@ impl View for TableWindow {
 
 impl TableWindow {
     fn table_ui(&mut self, ui: &mut egui::Ui) {
-        use egui_extras::{Column, TableBuilder};
-
         let text_height = egui::TextStyle::Body.resolve(ui.style()).size;
 
         let mut table = TableBuilder::new(ui)
-            .striped(self.striped)
+            .striped(true)
             .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-            .column(Column::auto())
-            .column(Column::initial(100.0).range(40.0..=300.0).resizable(true))
             .column(
                 Column::initial(100.0)
                     .at_least(40.0)
                     .resizable(true)
                     .clip(true),
             )
-            .column(Column::remainder())
+            .column(
+                Column::initial(100.0)
+                    .at_least(40.0)
+                    .resizable(true)
+                    .clip(true),
+            )
+            .column(
+                Column::initial(100.0)
+                    .at_least(40.0)
+                    .resizable(true)
+                    .clip(true),
+            )
             .min_scrolled_height(0.0);
-
-        if let Some(row_nr) = self.scroll_to_row.take() {
-            table = table.scroll_to_row(row_nr, None);
-        }
 
         table
             .header(20.0, |mut header| {
                 header.col(|ui| {
                     ui.strong("Row");
-                });
-                header.col(|ui| {
-                    ui.strong("Expanding content");
                 });
                 header.col(|ui| {
                     ui.strong("Clipped text");
@@ -133,9 +112,6 @@ impl TableWindow {
                         ui.label(row_index.to_string());
                     });
                     row.col(|ui| {
-                        expanding_content(ui);
-                    });
-                    row.col(|ui| {
                         ui.label(long_text(row_index));
                     });
                     row.col(|ui| {
@@ -144,17 +120,6 @@ impl TableWindow {
                 });
             });
     }
-}
-
-fn expanding_content(ui: &mut egui::Ui) {
-    let width = ui.available_width().clamp(20.0, 200.0);
-    let height = ui.available_height();
-    let (rect, _response) = ui.allocate_exact_size(egui::vec2(width, height), egui::Sense::hover());
-    ui.painter().hline(
-        rect.x_range(),
-        rect.center().y,
-        (1.0, ui.visuals().text_color()),
-    );
 }
 
 fn long_text(row_index: usize) -> String {
