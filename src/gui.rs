@@ -98,8 +98,24 @@ impl NWBView {
                                         &mut is_open,
                                     );
                                 }
-                                hdf5::types::TypeDescriptor::Unsigned(_) => todo!(),
-                                hdf5::types::TypeDescriptor::Boolean => todo!(),
+                                hdf5::types::TypeDescriptor::Unsigned(_) => {
+                                    self.show_dataset::<u64>(
+                                        &ds,
+                                        horizontal_ui,
+                                        dataset,
+                                        ctx,
+                                        &mut is_open,
+                                    );
+                                }
+                                hdf5::types::TypeDescriptor::Boolean => {
+                                    self.show_dataset::<bool>(
+                                        &ds,
+                                        horizontal_ui,
+                                        dataset,
+                                        ctx,
+                                        &mut is_open,
+                                    );
+                                }
                                 hdf5::types::TypeDescriptor::Enum(_) => todo!(),
                                 hdf5::types::TypeDescriptor::Compound(_) => todo!(),
                                 hdf5::types::TypeDescriptor::FixedArray(_, _) => todo!(),
