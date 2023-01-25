@@ -122,7 +122,15 @@ impl NWBView {
                                 hdf5::types::TypeDescriptor::FixedAscii(_) => todo!(),
                                 hdf5::types::TypeDescriptor::FixedUnicode(_) => todo!(),
                                 hdf5::types::TypeDescriptor::VarLenArray(_) => todo!(),
-                                hdf5::types::TypeDescriptor::VarLenAscii => todo!(),
+                                hdf5::types::TypeDescriptor::VarLenAscii => {
+                                    self.show_dataset::<hdf5::types::VarLenAscii>(
+                                        &ds,
+                                        horizontal_ui,
+                                        dataset,
+                                        ctx,
+                                        &mut is_open,
+                                    );
+                                }
                             }
                         }
                     });
