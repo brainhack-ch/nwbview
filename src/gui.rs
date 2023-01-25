@@ -58,7 +58,6 @@ impl NWBView {
             if !datasets.is_empty() {
                 for dataset in datasets {
                     let split_name: Vec<&str> = dataset.split('/').collect();
-                    println!("split_name = {:?}", split_name);
                     let dataset_name = split_name.last().unwrap();
                     let mut is_open = self.open_windows.contains(dataset);
                     dataset_names.insert(dataset_name.to_string());
@@ -68,20 +67,46 @@ impl NWBView {
                             is_open = true;
                         };
                         if is_open {
-                            let x_data: Vec<f64> = group
-                                .handler
-                                .dataset(dataset_name.as_ref())
-                                .unwrap()
-                                .read_raw()
-                                .unwrap();
-                            let n = x_data.len() - 1;
-                            if n > 0 {
-                                let mut table_box = Box::<super::table::TableWindow>::default();
-                                table_box.set_name(dataset.clone());
-                                table_box.show(ctx, &mut is_open);
-                                set_open(&mut self.open_windows, dataset, is_open);
-                            } else {
-                                horizontal_ui.monospace(format!("size={}", n));
+                            let ds = group.handler.dataset(dataset_name.as_ref()).unwrap();
+                            let ds_type = ds.dtype().unwrap();
+
+                            match ds_type.to_descriptor().unwrap() {
+                                hdf5::types::TypeDescriptor::Float(_) => {
+                                    self.show_dataset::<f64>(
+                                        &ds,
+                                        horizontal_ui,
+                                        dataset,
+                                        ctx,
+                                        &mut is_open,
+                                    );
+                                }
+                                hdf5::types::TypeDescriptor::VarLenUnicode => {
+                                    self.show_dataset::<hdf5::types::VarLenUnicode>(
+                                        &ds,
+                                        horizontal_ui,
+                                        dataset,
+                                        ctx,
+                                        &mut is_open,
+                                    );
+                                }
+                                hdf5::types::TypeDescriptor::Integer(_) => {
+                                    self.show_dataset::<i64>(
+                                        &ds,
+                                        horizontal_ui,
+                                        dataset,
+                                        ctx,
+                                        &mut is_open,
+                                    );
+                                }
+                                hdf5::types::TypeDescriptor::Unsigned(_) => todo!(),
+                                hdf5::types::TypeDescriptor::Boolean => todo!(),
+                                hdf5::types::TypeDescriptor::Enum(_) => todo!(),
+                                hdf5::types::TypeDescriptor::Compound(_) => todo!(),
+                                hdf5::types::TypeDescriptor::FixedArray(_, _) => todo!(),
+                                hdf5::types::TypeDescriptor::FixedAscii(_) => todo!(),
+                                hdf5::types::TypeDescriptor::FixedUnicode(_) => todo!(),
+                                hdf5::types::TypeDescriptor::VarLenArray(_) => todo!(),
+                                hdf5::types::TypeDescriptor::VarLenAscii => todo!(),
                             }
                         }
                     });
@@ -103,6 +128,27 @@ impl NWBView {
                 }
             }
         });
+    }
+
+    fn show_dataset<T: hdf5::H5Type + std::fmt::Display>(
+        &mut self,
+        ds: &hdf5::Dataset,
+        horizontal_ui: &mut Ui,
+        dataset: &String,
+        ctx: &egui::Context,
+        is_open: &mut bool,
+    ) {
+        if ds.is_scalar() {
+            let x_data: T = ds.read_scalar().unwrap();
+            horizontal_ui.monospace(format!("value={}", x_data));
+        } else {
+            let x_data: Vec<T> = ds.read_raw().unwrap();
+            let mut table_box = Box::<super::table::TableWindow<T>>::default();
+            table_box.set_name(dataset.clone());
+            table_box.set_data(x_data);
+            table_box.show(ctx, is_open);
+            set_open(&mut self.open_windows, dataset, *is_open);
+        }
     }
 }
 
