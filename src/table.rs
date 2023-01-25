@@ -6,7 +6,7 @@ pub trait View {
 }
 
 /// Something to view
-pub trait PopupTable<T> {
+pub trait PopupTable<T: std::fmt::Display> {
     /// `&'static` so we can also use it as a key to store open/close state.
     fn name(&self) -> String;
     fn set_name(&mut self, name: String);
@@ -31,7 +31,7 @@ impl<T> Default for TableWindow<T> {
     }
 }
 
-impl<T> PopupTable<T> for TableWindow<T> {
+impl<T: std::fmt::Display> PopupTable<T> for TableWindow<T> {
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -56,7 +56,7 @@ impl<T> PopupTable<T> for TableWindow<T> {
     }
 }
 
-impl<T> View for TableWindow<T> {
+impl<T: std::fmt::Display> View for TableWindow<T> {
     fn ui(&mut self, ui: &mut egui::Ui) {
         StripBuilder::new(ui)
             .size(Size::remainder().at_least(100.0)) // for the table
@@ -70,7 +70,7 @@ impl<T> View for TableWindow<T> {
     }
 }
 
-impl<T> TableWindow<T> {
+impl<T: std::fmt::Display> TableWindow<T> {
     fn table_ui(&mut self, ui: &mut egui::Ui) {
         let text_height = egui::TextStyle::Body.resolve(ui.style()).size;
 
@@ -115,7 +115,8 @@ impl<T> TableWindow<T> {
                         ui.label(row_index.to_string());
                     });
                     row.col(|ui| {
-                        ui.label(long_text(row_index));
+                        let value = get_item_at_index(&self.data, row_index);
+                        ui.label(value);
                     });
                     row.col(|ui| {
                         ui.add(egui::Label::new("Thousands of rows of even height").wrap(false));
@@ -123,6 +124,12 @@ impl<T> TableWindow<T> {
                 });
             });
     }
+}
+
+fn get_item_at_index<T: std::fmt::Display>(data: &Vec<T>, idx: usize) -> String {
+    let item = &data[idx];
+    let item_str = format!("{}", item);
+    item_str
 }
 
 fn long_text(row_index: usize) -> String {
