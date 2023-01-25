@@ -6,39 +6,42 @@ pub trait View {
 }
 
 /// Something to view
-pub trait PopupTable {
+pub trait PopupTable<T> {
     /// `&'static` so we can also use it as a key to store open/close state.
     fn name(&self) -> String;
-
     fn set_name(&mut self, name: String);
-
+    fn set_data(&mut self, data: Vec<T>);
     /// Show windows, etc
     fn show(&mut self, ctx: &egui::Context, open: &mut bool);
 }
 
 /// Shows off a table with dynamic layout
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub struct TableWindow {
+pub struct TableWindow<T> {
     name: String,
-    num_rows: usize,
+    data: Vec<T>,
 }
 
-impl Default for TableWindow {
+impl<T> Default for TableWindow<T> {
     fn default() -> Self {
         Self {
-            name: "☰ Table Window".to_owned(),
-            num_rows: 300_000,
+            name: "Table".to_string(),
+            data: vec![],
         }
     }
 }
 
-impl PopupTable for TableWindow {
+impl<T> PopupTable<T> for TableWindow<T> {
     fn name(&self) -> String {
         self.name.clone()
     }
 
     fn set_name(&mut self, name: String) {
         self.name = name;
+    }
+
+    fn set_data(&mut self, data: Vec<T>) {
+        self.data = data;
     }
 
     fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
@@ -53,7 +56,7 @@ impl PopupTable for TableWindow {
     }
 }
 
-impl View for TableWindow {
+impl<T> View for TableWindow<T> {
     fn ui(&mut self, ui: &mut egui::Ui) {
         StripBuilder::new(ui)
             .size(Size::remainder().at_least(100.0)) // for the table
@@ -67,7 +70,7 @@ impl View for TableWindow {
     }
 }
 
-impl TableWindow {
+impl<T> TableWindow<T> {
     fn table_ui(&mut self, ui: &mut egui::Ui) {
         let text_height = egui::TextStyle::Body.resolve(ui.style()).size;
 
@@ -107,7 +110,7 @@ impl TableWindow {
                 });
             })
             .body(|body| {
-                body.rows(text_height, self.num_rows, |row_index, mut row| {
+                body.rows(text_height, self.data.capacity(), |row_index, mut row| {
                     row.col(|ui| {
                         ui.label(row_index.to_string());
                     });
