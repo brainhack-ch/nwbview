@@ -63,8 +63,10 @@ impl NWBView {
                     dataset_names.insert(dataset_name.to_string());
                     ui.horizontal(|horizontal_ui| {
                         horizontal_ui.monospace(dataset_name.to_string());
-                        if horizontal_ui.button(RichText::new("☰")).clicked() && !is_open {
+                        if !is_open && horizontal_ui.button(RichText::new("☰")).clicked() {
                             is_open = true;
+                        } else if is_open && horizontal_ui.button(RichText::new("❌")).clicked() {
+                            is_open = false;
                         };
                         if is_open {
                             let ds = group.handler.dataset(dataset_name.as_ref()).unwrap();
@@ -133,6 +135,7 @@ impl NWBView {
                                 }
                             }
                         }
+                        set_open(&mut self.open_windows, dataset, is_open);
                     });
                 }
                 if dataset_names.contains("data") && dataset_names.contains("timestamps") {
@@ -164,14 +167,13 @@ impl NWBView {
     ) {
         if ds.is_scalar() {
             let x_data: T = ds.read_scalar().unwrap();
-            horizontal_ui.monospace(format!("value={}", x_data));
+            horizontal_ui.monospace(format!("{}", x_data));
         } else {
             let x_data: Vec<T> = ds.read_raw().unwrap();
             let mut table_box = Box::<super::table::TableWindow<T>>::default();
             table_box.set_name(dataset.clone());
             table_box.set_data(x_data);
             table_box.show(ctx, is_open);
-            set_open(&mut self.open_windows, dataset, *is_open);
         }
     }
 }
