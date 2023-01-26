@@ -161,7 +161,7 @@ impl NWBView {
         &mut self,
         ds: &hdf5::Dataset,
         horizontal_ui: &mut Ui,
-        dataset: &String,
+        dataset: &str,
         ctx: &egui::Context,
         is_open: &mut bool,
     ) {
@@ -171,7 +171,7 @@ impl NWBView {
         } else {
             let x_data: Vec<T> = ds.read_raw().unwrap();
             let mut table_box = Box::<super::table::TableWindow<T>>::default();
-            table_box.set_name(dataset.clone());
+            table_box.set_name(dataset.to_owned());
             table_box.set_data(x_data);
             table_box.show(ctx, is_open);
         }
