@@ -6,8 +6,8 @@ use crate::gui::egui::Ui;
 use crate::hdf;
 use crate::plot::Popup;
 use crate::table::PopupTable;
-use eframe::egui;
 use eframe::egui::RichText;
+use eframe::egui::{self, Window};
 
 #[derive(Default)]
 pub(crate) struct NWBView {
@@ -74,49 +74,24 @@ impl NWBView {
 
                             match ds_type.to_descriptor().unwrap() {
                                 hdf5::types::TypeDescriptor::Float(_) => {
-                                    self.show_dataset::<f64>(
-                                        &ds,
-                                        horizontal_ui,
-                                        dataset,
-                                        ctx,
-                                        &mut is_open,
-                                    );
+                                    self.show_dataset::<f64>(&ds, dataset, ctx, &mut is_open);
                                 }
                                 hdf5::types::TypeDescriptor::VarLenUnicode => {
                                     self.show_dataset::<hdf5::types::VarLenUnicode>(
                                         &ds,
-                                        horizontal_ui,
                                         dataset,
                                         ctx,
                                         &mut is_open,
                                     );
                                 }
                                 hdf5::types::TypeDescriptor::Integer(_) => {
-                                    self.show_dataset::<i64>(
-                                        &ds,
-                                        horizontal_ui,
-                                        dataset,
-                                        ctx,
-                                        &mut is_open,
-                                    );
+                                    self.show_dataset::<i64>(&ds, dataset, ctx, &mut is_open);
                                 }
                                 hdf5::types::TypeDescriptor::Unsigned(_) => {
-                                    self.show_dataset::<u64>(
-                                        &ds,
-                                        horizontal_ui,
-                                        dataset,
-                                        ctx,
-                                        &mut is_open,
-                                    );
+                                    self.show_dataset::<u64>(&ds, dataset, ctx, &mut is_open);
                                 }
                                 hdf5::types::TypeDescriptor::Boolean => {
-                                    self.show_dataset::<bool>(
-                                        &ds,
-                                        horizontal_ui,
-                                        dataset,
-                                        ctx,
-                                        &mut is_open,
-                                    );
+                                    self.show_dataset::<bool>(&ds, dataset, ctx, &mut is_open);
                                 }
                                 hdf5::types::TypeDescriptor::Enum(_) => todo!(),
                                 hdf5::types::TypeDescriptor::Compound(_) => todo!(),
@@ -127,7 +102,6 @@ impl NWBView {
                                 hdf5::types::TypeDescriptor::VarLenAscii => {
                                     self.show_dataset::<hdf5::types::VarLenAscii>(
                                         &ds,
-                                        horizontal_ui,
                                         dataset,
                                         ctx,
                                         &mut is_open,
@@ -160,14 +134,20 @@ impl NWBView {
     fn show_dataset<T: hdf5::H5Type + std::fmt::Display>(
         &mut self,
         ds: &hdf5::Dataset,
-        horizontal_ui: &mut Ui,
         dataset: &str,
         ctx: &egui::Context,
         is_open: &mut bool,
     ) {
         if ds.is_scalar() {
             let x_data: T = ds.read_scalar().unwrap();
-            horizontal_ui.monospace(format!("{}", x_data));
+            Window::new(dataset.to_owned())
+                .open(is_open)
+                .vscroll(true)
+                .resizable(true)
+                .default_height(300.0)
+                .show(ctx, |ui| {
+                    ui.label(format!("{}", x_data));
+                });
         } else {
             let x_data: Vec<T> = ds.read_raw().unwrap();
             let mut table_box = Box::<super::table::TableWindow<T>>::default();
