@@ -59,10 +59,31 @@ impl View for PlotWindow {
     fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) {
         ui.separator();
 
-        ui.label("Zoom in zoom out using ctrl+mouse.");
+        let y_data: Vec<f64> = hdf5_group
+            .handler
+            .dataset("data")
+            .unwrap()
+            .read_raw()
+            .unwrap();
+
+        // Display some basic statistics
+        let min_value = y_data
+            .iter()
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        let max_value = y_data
+            .iter()
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        ui.label(egui::RichText::new("Statistics:"));
+        ui.label(egui::RichText::new(format!("min value={:?}", min_value)));
+        ui.label(egui::RichText::new(format!("max value={:?}", max_value)));
+
+        // Plot the data
         ui.horizontal(|ui| {
             self.trace_plot(ui, hdf5_group).context_menu(|_ui| {});
         });
+        ui.label("Zoom in zoom out using ctrl+mouse.");
     }
 }
 
