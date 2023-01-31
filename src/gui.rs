@@ -5,8 +5,9 @@ use std::path::Path;
 use crate::gui::egui::Ui;
 use crate::hdf;
 use crate::plot::Popup;
-use eframe::egui;
+use crate::table::PopupTable;
 use eframe::egui::RichText;
+use eframe::egui::{self, Window};
 
 #[derive(Default)]
 pub(crate) struct NWBView {
@@ -57,14 +58,63 @@ impl NWBView {
             if !datasets.is_empty() {
                 for dataset in datasets {
                     let split_name: Vec<&str> = dataset.split('/').collect();
-                    println!("split_name = {:?}", split_name);
                     let dataset_name = split_name.last().unwrap();
+                    let mut is_open = self.open_windows.contains(dataset);
                     dataset_names.insert(dataset_name.to_string());
-                    ui.monospace(dataset_name.to_string());
+                    ui.horizontal(|horizontal_ui| {
+                        horizontal_ui.monospace(dataset_name.to_string());
+                        if !is_open && horizontal_ui.button(RichText::new("☰")).clicked() {
+                            is_open = true;
+                        } else if is_open && horizontal_ui.button(RichText::new("❌")).clicked() {
+                            is_open = false;
+                        };
+                        if is_open {
+                            let ds = group.handler.dataset(dataset_name.as_ref()).unwrap();
+                            let ds_type = ds.dtype().unwrap();
+
+                            match ds_type.to_descriptor().unwrap() {
+                                hdf5::types::TypeDescriptor::Float(_) => {
+                                    self.show_dataset::<f64>(&ds, dataset, ctx, &mut is_open);
+                                }
+                                hdf5::types::TypeDescriptor::VarLenUnicode => {
+                                    self.show_dataset::<hdf5::types::VarLenUnicode>(
+                                        &ds,
+                                        dataset,
+                                        ctx,
+                                        &mut is_open,
+                                    );
+                                }
+                                hdf5::types::TypeDescriptor::Integer(_) => {
+                                    self.show_dataset::<i64>(&ds, dataset, ctx, &mut is_open);
+                                }
+                                hdf5::types::TypeDescriptor::Unsigned(_) => {
+                                    self.show_dataset::<u64>(&ds, dataset, ctx, &mut is_open);
+                                }
+                                hdf5::types::TypeDescriptor::Boolean => {
+                                    self.show_dataset::<bool>(&ds, dataset, ctx, &mut is_open);
+                                }
+                                hdf5::types::TypeDescriptor::Enum(_) => todo!(),
+                                hdf5::types::TypeDescriptor::Compound(_) => todo!(),
+                                hdf5::types::TypeDescriptor::FixedArray(_, _) => todo!(),
+                                hdf5::types::TypeDescriptor::FixedAscii(_) => todo!(),
+                                hdf5::types::TypeDescriptor::FixedUnicode(_) => todo!(),
+                                hdf5::types::TypeDescriptor::VarLenArray(_) => todo!(),
+                                hdf5::types::TypeDescriptor::VarLenAscii => {
+                                    self.show_dataset::<hdf5::types::VarLenAscii>(
+                                        &ds,
+                                        dataset,
+                                        ctx,
+                                        &mut is_open,
+                                    );
+                                }
+                            }
+                        }
+                        set_open(&mut self.open_windows, dataset, is_open);
+                    });
                 }
                 if dataset_names.contains("data") && dataset_names.contains("timestamps") {
                     let mut is_open = self.open_windows.contains(&group.handler.name());
-                    if ui.button("plot").clicked() {
+                    if ui.button(RichText::new(" 🗠 Plot")).clicked() {
                         println!("plotting");
                         print!("is_open: {}", is_open);
                         if !is_open {
@@ -79,6 +129,32 @@ impl NWBView {
                 }
             }
         });
+    }
+
+    fn show_dataset<T: hdf5::H5Type + std::fmt::Display>(
+        &mut self,
+        ds: &hdf5::Dataset,
+        dataset: &str,
+        ctx: &egui::Context,
+        is_open: &mut bool,
+    ) {
+        if ds.is_scalar() {
+            let x_data: T = ds.read_scalar().unwrap();
+            Window::new(dataset.to_owned())
+                .open(is_open)
+                .vscroll(true)
+                .resizable(true)
+                .default_height(300.0)
+                .show(ctx, |ui| {
+                    ui.label(format!("{}", x_data));
+                });
+        } else {
+            let x_data: Vec<T> = ds.read_raw().unwrap();
+            let mut table_box = Box::<super::table::TableWindow<T>>::default();
+            table_box.set_name(dataset.to_owned());
+            table_box.set_data(x_data);
+            table_box.show(ctx, is_open);
+        }
     }
 }
 
