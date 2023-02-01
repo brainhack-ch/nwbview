@@ -68,11 +68,33 @@ impl NWBView {
                         } else if is_open && horizontal_ui.button(RichText::new("❌")).clicked() {
                             is_open = false;
                         };
-                        if is_open {
-                            let ds = group.handler.dataset(dataset_name.as_ref()).unwrap();
-                            let ds_type = ds.dtype().unwrap();
+                    });
+                    if is_open {
+                        let ds = match group.handler.dataset(dataset_name.as_ref()) {
+                            Err(e) => {
+                                self.popup(
+                                    "Dataset error",
+                                    &e.to_string(),
+                                    ctx,
+                                    dataset,
+                                    &mut is_open,
+                                );
+                                continue;
+                            }
+                            Ok(x) => x,
+                        };
+                        let ds_type = ds.dtype().unwrap();
+                        let type_descriptor = ds_type.to_descriptor();
 
-                            match ds_type.to_descriptor().unwrap() {
+                        match type_descriptor {
+                            Err(e) => self.popup(
+                                "Dataset error",
+                                &e.to_string(),
+                                ctx,
+                                dataset,
+                                &mut is_open,
+                            ),
+                            Ok(descriptor) => match descriptor {
                                 hdf5::types::TypeDescriptor::Float(_) => {
                                     self.show_dataset::<f64>(&ds, dataset, ctx, &mut is_open);
                                 }
@@ -93,12 +115,12 @@ impl NWBView {
                                 hdf5::types::TypeDescriptor::Boolean => {
                                     self.show_dataset::<bool>(&ds, dataset, ctx, &mut is_open);
                                 }
-                                hdf5::types::TypeDescriptor::Enum(_) => todo!(),
-                                hdf5::types::TypeDescriptor::Compound(_) => todo!(),
-                                hdf5::types::TypeDescriptor::FixedArray(_, _) => todo!(),
-                                hdf5::types::TypeDescriptor::FixedAscii(_) => todo!(),
-                                hdf5::types::TypeDescriptor::FixedUnicode(_) => todo!(),
-                                hdf5::types::TypeDescriptor::VarLenArray(_) => todo!(),
+                                // hdf5::types::TypeDescriptor::Enum(_) => todo!(),
+                                // hdf5::types::TypeDescriptor::Compound(_) => todo!(),
+                                // hdf5::types::TypeDescriptor::FixedArray(_, _) => todo!(),
+                                // hdf5::types::TypeDescriptor::FixedAscii(_) => todo!(),
+                                // hdf5::types::TypeDescriptor::FixedUnicode(_) => todo!(),
+                                // hdf5::types::TypeDescriptor::VarLenArray(_) => todo!(),
                                 hdf5::types::TypeDescriptor::VarLenAscii => {
                                     self.show_dataset::<hdf5::types::VarLenAscii>(
                                         &ds,
@@ -107,12 +129,19 @@ impl NWBView {
                                         &mut is_open,
                                     );
                                 }
-                            }
+                                _ => self.popup(
+                                    "Dataset error",
+                                    "The dataset type is not supported yet.",
+                                    ctx,
+                                    dataset,
+                                    &mut is_open,
+                                ),
+                            },
                         }
-                        set_open(&mut self.open_windows, dataset, is_open);
-                    });
+                    }
+                    set_open(&mut self.open_windows, dataset, is_open);
                 }
-                if dataset_names.contains("data") && dataset_names.contains("timestamps") {
+                if dataset_names.contains("data") {
                     let mut is_open = self.open_windows.contains(&group.handler.name());
                     if ui.button(RichText::new(" 🗠 Plot")).clicked() {
                         println!("plotting");
@@ -156,10 +185,51 @@ impl NWBView {
             table_box.show(ctx, is_open);
         }
     }
+
+    fn popup(
+        &mut self,
+        title: &str,
+        msg: &str,
+        ctx: &egui::Context,
+        dataset: &str,
+        is_open: &mut bool,
+    ) {
+        let mut must_close = false;
+        Window::new(title)
+            .open(is_open)
+            .collapsible(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.label(format!(
+                    "The dataset {:?} could not be opened because of the following error:",
+                    dataset
+                ));
+                ui.label(msg);
+                ui.vertical_centered(|sub_ui| {
+                    if sub_ui.button(RichText::new("Ok")).clicked() {
+                        must_close = true;
+                    }
+                });
+            });
+        if must_close {
+            *is_open = false;
+        }
+        set_open(&mut self.open_windows, &dataset.to_string(), *is_open);
+    }
 }
 
 impl eframe::App for NWBView {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::TopBottomPanel::bottom("theme_panel")
+            .resizable(false)
+            .min_height(32.0)
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Theme:");
+                    egui::widgets::global_dark_light_mode_buttons(ui);
+                });
+            });
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.label("Drag-and-drop files onto the window!");
 
@@ -177,14 +247,13 @@ impl eframe::App for NWBView {
             let mut all_loaded_files: Vec<hdf::FileTree> = Vec::new();
             mem::swap(&mut all_loaded_files, &mut self.loaded_files);
 
-            egui::ScrollArea::vertical().show(ui, |sub_ui| {
+            egui::ScrollArea::both().show(ui, |sub_ui| {
                 for loaded_file in all_loaded_files.iter_mut() {
                     sub_ui.horizontal(|horizontal_ui| {
                         if horizontal_ui.button(RichText::new("❌")).clicked() {
                             loaded_file.is_opened = false; // Mark the file as closed
                         };
                         horizontal_ui.collapsing(loaded_file.file.filename(), |header_ui| {
-                            println!("The file {} is loaded", loaded_file.file.filename());
                             for groups in &loaded_file.tree.groups {
                                 self.create_group_recursion(groups, header_ui, ctx);
                             }
@@ -195,11 +264,6 @@ impl eframe::App for NWBView {
 
             all_loaded_files.retain(|x| x.is_opened); // Remove closed files
             mem::swap(&mut all_loaded_files, &mut self.loaded_files);
-
-            ui.horizontal(|ui| {
-                ui.label("Theme:");
-                egui::widgets::global_dark_light_mode_buttons(ui);
-            });
         });
 
         preview_files_being_dropped(ctx);
