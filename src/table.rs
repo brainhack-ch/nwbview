@@ -1,62 +1,67 @@
 use eframe::egui;
 use egui_extras::{Column, Size, StripBuilder, TableBuilder};
-
-pub trait View {
-    fn ui(&mut self, ui: &mut egui::Ui);
-}
-
-/// Something to view
-pub trait PopupTable<T: std::fmt::Display> {
-    /// `&'static` so we can also use it as a key to store open/close state.
-    fn name(&self) -> String;
-    fn set_name(&mut self, name: String);
-    fn set_data(&mut self, data: Vec<T>);
-    /// Show windows, etc
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool);
-}
+use crate::display_traits::{View, Show};
 
 /// Shows off a table with dynamic layout
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct TableWindow<T> {
     name: String,
-    data: Vec<T>,
+    data: Option<Vec<T>>,
+    scalar: Option<String>,
 }
 
-impl<T> Default for TableWindow<T> {
+impl<T: hdf5::H5Type + std::fmt::Display> Default for TableWindow<T> {
     fn default() -> Self {
         Self {
             name: "Table".to_string(),
-            data: vec![],
+            data: None,
+            scalar: None,
         }
     }
 }
 
-impl<T: std::fmt::Display> PopupTable<T> for TableWindow<T> {
-    fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    fn set_name(&mut self, name: String) {
+impl<T: hdf5::H5Type + std::fmt::Display> TableWindow<T> {
+    pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
 
-    fn set_data(&mut self, data: Vec<T>) {
-        self.data = data;
+    pub fn set_data(&mut self, data: Vec<T>) {
+        self.data = Some(data);
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
-        egui::Window::new(self.name())
-            .open(open)
-            .resizable(true)
-            .default_width(100.0)
-            .show(ctx, |ui| {
-                use View as _;
-                self.ui(ui);
-            });
+    pub fn set_scalar(&mut self, scalar: String) {
+        self.scalar = Some(scalar);
     }
 }
 
-impl<T: std::fmt::Display> View for TableWindow<T> {
+impl<T: hdf5::H5Type + std::fmt::Display> Show for TableWindow<T> {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
+        if !self.data.is_none() {
+            egui::Window::new(&self.name)
+                .open(open)
+                .resizable(true)
+                .default_width(100.0)
+                .show(ctx, |ui| {
+                    use View as _;
+                    self.ui(ui);
+                });
+        } else if !self.scalar.is_none() {
+            egui::Window::new(&self.name)
+                .open(open)
+                .vscroll(true)
+                .resizable(true)
+                .default_height(300.0)
+                .show(ctx, |ui| {
+                    ui.label(format!("{:?}", self.scalar.as_ref().unwrap()));
+                });
+        } else {
+            // Nothing to show
+            // Should raise something here?
+        }
+    }
+}
+
+impl<T: hdf5::H5Type + std::fmt::Display> View for TableWindow<T> {
     fn ui(&mut self, ui: &mut egui::Ui) {
         StripBuilder::new(ui)
             .size(Size::remainder().at_least(50.0)) // for the table
@@ -70,7 +75,7 @@ impl<T: std::fmt::Display> View for TableWindow<T> {
     }
 }
 
-impl<T: std::fmt::Display> TableWindow<T> {
+impl<T: hdf5::H5Type + std::fmt::Display> TableWindow<T> {
     fn table_ui(&mut self, ui: &mut egui::Ui) {
         let text_height = egui::TextStyle::Body.resolve(ui.style()).size;
 
@@ -100,13 +105,13 @@ impl<T: std::fmt::Display> TableWindow<T> {
                 });
             })
             .body(|body| {
-                body.rows(text_height, self.data.capacity(), |row_index, mut row| {
+                body.rows(text_height, self.data.as_ref().unwrap().capacity(), |row_index, mut row| {
                     row.col(|ui| {
                         ui.label(row_index.to_string());
                     });
                     row.col(|ui| {
-                        let item = &self.data[row_index];
-                        let item_str = format!("{item}");
+                        let item = &self.data.as_ref().unwrap()[row_index];
+                        let item_str = format!("{}", item);
                         ui.label(item_str);
                     });
                 });

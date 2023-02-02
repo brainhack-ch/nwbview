@@ -1,18 +1,25 @@
+use std::any::Any;
 use std::collections::BTreeSet;
+use std::collections::HashMap;
 use std::mem;
 use std::path::Path;
 
 use crate::gui::egui::Ui;
 use crate::hdf;
-use crate::plot::Popup;
-use crate::table::PopupTable;
+// use crate::plot::Popup;
+// use crate::popup::PopupMessage;
+// use crate::table::PopupTable;
+use crate::display_traits::Show;
 use eframe::egui::RichText;
-use eframe::egui::{self, Window};
+// use eframe::egui::{self, Window};
+use eframe::egui;
+
+trait AnyShow: Any + Show {}
 
 #[derive(Default)]
 pub(crate) struct NWBView {
     pub loaded_files: Vec<hdf::FileTree>,
-    pub open_windows: BTreeSet<String>,
+    pub open_windows: HashMap<String, Box<dyn Show>>,
 }
 
 impl NWBView {
@@ -59,7 +66,7 @@ impl NWBView {
                 for dataset in datasets {
                     let split_name: Vec<&str> = dataset.split('/').collect();
                     let dataset_name = split_name.last().unwrap();
-                    let mut is_open = self.open_windows.contains(dataset);
+                    let mut is_open = self.open_windows.contains_key(dataset);
                     dataset_names.insert(dataset_name.to_string());
                     ui.horizontal(|horizontal_ui| {
                         horizontal_ui.monospace(dataset_name.to_string());
@@ -70,151 +77,139 @@ impl NWBView {
                         };
                     });
                     if is_open {
-                        let ds = match group.handler.dataset(dataset_name.as_ref()) {
-                            Err(e) => {
-                                self.popup(
-                                    "Dataset error",
-                                    &e.to_string(),
-                                    ctx,
-                                    dataset,
-                                    &mut is_open,
-                                );
-                                continue;
-                            }
-                            Ok(x) => x,
-                        };
-                        let ds_type = ds.dtype().unwrap();
-                        let type_descriptor = ds_type.to_descriptor();
+                        if !self.open_windows.contains_key(dataset) {
+                            let ds = match group.handler.dataset(dataset_name.as_ref()) {
+                                Err(e) => {
+                                    self.popup(
+                                        &e.to_string(),
+                                        ctx,
+                                        dataset,
+                                        &mut is_open,
+                                    );
+                                    continue;
+                                }
+                                Ok(x) => x,
+                            };
+                            let ds_type = ds.dtype().unwrap();
+                            let type_descriptor = ds_type.to_descriptor();
 
-                        match type_descriptor {
-                            Err(e) => self.popup(
-                                "Dataset error",
-                                &e.to_string(),
-                                ctx,
-                                dataset,
-                                &mut is_open,
-                            ),
-                            Ok(descriptor) => match descriptor {
-                                hdf5::types::TypeDescriptor::Float(_) => {
-                                    self.show_dataset::<f64>(&ds, dataset, ctx, &mut is_open);
-                                }
-                                hdf5::types::TypeDescriptor::VarLenUnicode => {
-                                    self.show_dataset::<hdf5::types::VarLenUnicode>(
-                                        &ds,
-                                        dataset,
+                            match type_descriptor {
+                                Err(e) => {
+                                    self.popup(
+                                        &e.to_string(),
                                         ctx,
+                                        dataset,
                                         &mut is_open,
                                     );
-                                }
-                                hdf5::types::TypeDescriptor::Integer(_) => {
-                                    self.show_dataset::<i64>(&ds, dataset, ctx, &mut is_open);
-                                }
-                                hdf5::types::TypeDescriptor::Unsigned(_) => {
-                                    self.show_dataset::<u64>(&ds, dataset, ctx, &mut is_open);
-                                }
-                                hdf5::types::TypeDescriptor::Boolean => {
-                                    self.show_dataset::<bool>(&ds, dataset, ctx, &mut is_open);
-                                }
-                                // hdf5::types::TypeDescriptor::Enum(_) => todo!(),
-                                // hdf5::types::TypeDescriptor::Compound(_) => todo!(),
-                                // hdf5::types::TypeDescriptor::FixedArray(_, _) => todo!(),
-                                // hdf5::types::TypeDescriptor::FixedAscii(_) => todo!(),
-                                // hdf5::types::TypeDescriptor::FixedUnicode(_) => todo!(),
-                                // hdf5::types::TypeDescriptor::VarLenArray(_) => todo!(),
-                                hdf5::types::TypeDescriptor::VarLenAscii => {
-                                    self.show_dataset::<hdf5::types::VarLenAscii>(
-                                        &ds,
-                                        dataset,
-                                        ctx,
-                                        &mut is_open,
-                                    );
-                                }
-                                _ => self.popup(
-                                    "Dataset error",
-                                    "The dataset type is not supported yet.",
-                                    ctx,
-                                    dataset,
-                                    &mut is_open,
-                                ),
-                            },
+                                    continue;
+                                },
+                                Ok(descriptor) => match descriptor {
+                                    hdf5::types::TypeDescriptor::Float(_) => {
+                                        self.build_dataset::<f64>(&ds, dataset);
+                                    }
+                                    hdf5::types::TypeDescriptor::VarLenUnicode => {
+                                        self.build_dataset::<hdf5::types::VarLenUnicode>(
+                                            &ds,
+                                            dataset,
+                                        );
+                                    }
+                                    hdf5::types::TypeDescriptor::Integer(_) => {
+                                        self.build_dataset::<i64>(&ds, dataset);
+                                    }
+                                    hdf5::types::TypeDescriptor::Unsigned(_) => {
+                                        self.build_dataset::<u64>(&ds, dataset);
+                                    }
+                                    hdf5::types::TypeDescriptor::Boolean => {
+                                        self.build_dataset::<bool>(&ds, dataset);
+                                    }
+                                    // hdf5::types::TypeDescriptor::Enum(_) => todo!(),
+                                    // hdf5::types::TypeDescriptor::Compound(_) => todo!(),
+                                    // hdf5::types::TypeDescriptor::FixedArray(_, _) => todo!(),
+                                    // hdf5::types::TypeDescriptor::FixedAscii(_) => todo!(),
+                                    // hdf5::types::TypeDescriptor::FixedUnicode(_) => todo!(),
+                                    // hdf5::types::TypeDescriptor::VarLenArray(_) => todo!(),
+                                    hdf5::types::TypeDescriptor::VarLenAscii => {
+                                        self.build_dataset::<hdf5::types::VarLenAscii>(
+                                            &ds,
+                                            dataset,
+                                        );
+                                    }
+                                    _ => {
+                                        self.popup(
+                                            "The dataset type is not supported yet.",
+                                            ctx,
+                                            dataset,
+                                            &mut is_open,
+                                        );
+                                        continue;
+                                    },
+                                },
+                            }
                         }
+                        self.open_windows[dataset].show(ctx, &mut is_open);
                     }
-                    set_open(&mut self.open_windows, dataset, is_open);
+                    self.check_close(is_open, dataset);
                 }
                 if dataset_names.contains("data") {
-                    let mut is_open = self.open_windows.contains(&group.handler.name());
+                    let mut is_open = self.open_windows.contains_key(&group_name);
                     if ui.button(RichText::new(" 🗠 Plot")).clicked() {
-                        println!("plotting");
-                        print!("is_open: {is_open}");
-                        if !is_open {
-                            is_open = true;
-                        }
+                        is_open = true;
                     }
                     if is_open {
-                        let mut test_plot = Box::<super::plot::PlotWindow>::default();
-                        test_plot.show(ctx, &mut is_open, group);
-                        set_open(&mut self.open_windows, &group.handler.name(), is_open);
+                        if !self.open_windows.contains_key(&group_name) {
+                            let mut new_plot = Box::<super::plot::PlotWindow>::default();
+                            new_plot.get_data_from_group(group);
+                            self.open_windows.insert(group_name, new_plot);
+                        }
+                        self.open_windows[&group_name].show(ctx, &mut is_open);
                     }
+                    self.check_close(is_open, &group_name);
                 }
             }
         });
     }
 
-    fn show_dataset<T: hdf5::H5Type + std::fmt::Display>(
+    fn build_dataset<T: hdf5::H5Type + std::fmt::Display>(
         &mut self,
         ds: &hdf5::Dataset,
         dataset: &str,
-        ctx: &egui::Context,
-        is_open: &mut bool,
     ) {
+        let mut new_ds = Box::<super::table::TableWindow<T>>::default();
+        new_ds.set_name(dataset.to_owned());
         if ds.is_scalar() {
-            let x_data: T = ds.read_scalar().unwrap();
-            Window::new(dataset.to_owned())
-                .open(is_open)
-                .vscroll(true)
-                .resizable(true)
-                .default_height(300.0)
-                .show(ctx, |ui| {
-                    ui.label(format!("{x_data}"));
-                });
+            let scalar: String = ds.read_scalar::<T>().unwrap().to_string();
+            new_ds.set_scalar(scalar);
         } else {
-            let x_data: Vec<T> = ds.read_raw().unwrap();
-            let mut table_box = Box::<super::table::TableWindow<T>>::default();
-            table_box.set_name(dataset.to_owned());
-            table_box.set_data(x_data);
-            table_box.show(ctx, is_open);
+            let x_data: Vec<T> = ds
+                .read_raw::<T>()
+                .unwrap()
+                .iter()
+                .map(|x| *x as T)
+                .collect();
+            new_ds.set_data(x_data);
         }
+        self.open_windows.insert(dataset.to_string(), new_ds);
     }
 
     fn popup(
         &mut self,
-        title: &str,
         msg: &str,
         ctx: &egui::Context,
         dataset: &str,
         is_open: &mut bool,
     ) {
-        let mut must_close = false;
-        Window::new(title)
-            .open(is_open)
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
-            .show(ctx, |ui| {
-                ui.label(format!(
-                    "The dataset {dataset:?} could not be opened because of the following error:"
-                ));
-                ui.label(msg);
-                ui.vertical_centered(|sub_ui| {
-                    if sub_ui.button(RichText::new("Ok")).clicked() {
-                        must_close = true;
-                    }
-                });
-            });
-        if must_close {
-            *is_open = false;
+        let msg = format!("The dataset {:?} could not be opened because of the following error:\n{:?}", dataset, msg);
+        let mut new_popup = Box::<super::popup::PopupWindow>::default();
+        new_popup.set_title("Dataset error".to_string());
+        new_popup.set_message(msg);
+        new_popup.show(ctx, &mut is_open);
+        self.open_windows.insert(dataset.to_string(), new_popup);
+    }
+
+    fn check_close(&mut self, open: bool, key: &String) {
+        if !(open) {
+            self.open_windows.remove(key);
         }
-        set_open(&mut self.open_windows, &dataset.to_string(), *is_open);
     }
 }
 
@@ -312,10 +307,10 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
     }
 }
 
-fn set_open(open: &mut BTreeSet<String>, key: &String, is_open: bool) {
+fn set_open(open: &mut HashMap<String, Box<dyn Any>>, key: &String, is_open: bool, handler: Box<dyn Any>) {
     if is_open {
-        if !open.contains(key) {
-            open.insert(key.to_owned());
+        if !open.contains_key(key) {
+            open.insert(key.to_owned(), handler);
         }
     } else {
         open.remove(key);

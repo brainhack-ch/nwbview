@@ -1,6 +1,8 @@
+mod display_traits;
 mod gui;
 mod hdf;
 mod plot;
+mod popup;
 mod table;
 use gui::NWBView;
 
