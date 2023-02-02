@@ -89,18 +89,31 @@ impl View for PlotWindow {
 
 impl PlotWindow {
     fn trace_plot(&self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) -> egui::Response {
-        let x_data: Vec<f64> = hdf5_group
-            .handler
-            .dataset("timestamps")
-            .unwrap()
-            .read_raw()
-            .unwrap();
         let y_data: Vec<f64> = hdf5_group
             .handler
             .dataset("data")
             .unwrap()
             .read_raw()
             .unwrap();
+        let has_timestamps: bool = hdf5_group
+            .handler
+            .datasets()
+            .unwrap()
+            .iter()
+            .any(|x| x.name().ends_with("timestamps"));
+        let x_data: Vec<f64> = match has_timestamps {
+            false => (0..y_data.len())
+                .collect::<Vec<usize>>()
+                .iter()
+                .map(|x| *x as f64)
+                .collect(),
+            true => hdf5_group
+                .handler
+                .dataset("timestamps")
+                .unwrap()
+                .read_raw()
+                .unwrap(),
+        };
         use egui::plot::{Line, PlotPoints};
         let n = x_data.len() - 1;
         let step_size = compute_step_size(n);
