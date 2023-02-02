@@ -198,6 +198,7 @@ impl NWBView {
         Window::new(title)
             .open(is_open)
             .collapsible(false)
+            .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.label(format!(
