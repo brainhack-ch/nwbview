@@ -76,8 +76,8 @@ impl View for PlotWindow {
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap();
         ui.label(egui::RichText::new("Statistics:"));
-        ui.label(egui::RichText::new(format!("min value={:?}", min_value)));
-        ui.label(egui::RichText::new(format!("max value={:?}", max_value)));
+        ui.label(egui::RichText::new(format!("min value={min_value:?}")));
+        ui.label(egui::RichText::new(format!("max value={max_value:?}")));
 
         // Plot the data
         ui.horizontal(|ui| {
