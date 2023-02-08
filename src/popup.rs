@@ -1,8 +1,7 @@
+use crate::display_traits::{Show, View};
 use eframe::egui;
 use eframe::egui::RichText;
 use eframe::egui::Window;
-use crate::display_traits::{View, Show};
-
 
 /// Shows off a popup with dynamic layout
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]

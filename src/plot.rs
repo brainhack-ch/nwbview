@@ -1,7 +1,6 @@
+use crate::display_traits::{Show, View};
 use crate::hdf;
-use crate::display_traits::{View, Show};
 use eframe::egui;
-
 
 #[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -63,8 +62,14 @@ impl View for PlotWindow {
 
         // Show some statistics
         ui.label(egui::RichText::new("Statistics:"));
-        ui.label(egui::RichText::new(format!("min value={:?}", self.min_value)));
-        ui.label(egui::RichText::new(format!("max value={:?}", self.max_value)));
+        ui.label(egui::RichText::new(format!(
+            "min value={:?}",
+            self.min_value
+        )));
+        ui.label(egui::RichText::new(format!(
+            "max value={:?}",
+            self.max_value
+        )));
 
         // Plot the data
         ui.checkbox(&mut self.proportional, "Equal aspect ratio")
@@ -106,11 +111,13 @@ impl PlotWindow {
                 .unwrap(),
         };
 
-        self.min_value = *self.y_data
+        self.min_value = *self
+            .y_data
             .iter()
             .min_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap();
-        self.max_value = *self.y_data
+        self.max_value = *self
+            .y_data
             .iter()
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap();
@@ -139,8 +146,7 @@ impl PlotWindow {
         if self.proportional {
             plot = plot.data_aspect(1.0);
         }
-        plot.show(ui, |plot_ui| plot_ui.line(line))
-            .response
+        plot.show(ui, |plot_ui| plot_ui.line(line)).response
     }
 }
 

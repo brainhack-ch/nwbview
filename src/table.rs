@@ -1,6 +1,6 @@
+use crate::display_traits::{Show, View};
 use eframe::egui;
 use egui_extras::{Column, Size, StripBuilder, TableBuilder};
-use crate::display_traits::{View, Show};
 
 /// Shows off a table with dynamic layout
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -36,7 +36,7 @@ impl<T: hdf5::H5Type + std::fmt::Display> TableWindow<T> {
 
 impl<T: hdf5::H5Type + std::fmt::Display> Show for TableWindow<T> {
     fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
-        if !self.data.is_none() {
+        if self.data.is_some() {
             egui::Window::new(&self.name)
                 .open(open)
                 .resizable(true)
@@ -45,7 +45,7 @@ impl<T: hdf5::H5Type + std::fmt::Display> Show for TableWindow<T> {
                     use View as _;
                     self.ui(ui);
                 });
-        } else if !self.scalar.is_none() {
+        } else if self.scalar.is_some() {
             egui::Window::new(&self.name)
                 .open(open)
                 .vscroll(true)
@@ -105,16 +105,20 @@ impl<T: hdf5::H5Type + std::fmt::Display> TableWindow<T> {
                 });
             })
             .body(|body| {
-                body.rows(text_height, self.data.as_ref().unwrap().capacity(), |row_index, mut row| {
-                    row.col(|ui| {
-                        ui.label(row_index.to_string());
-                    });
-                    row.col(|ui| {
-                        let item = &self.data.as_ref().unwrap()[row_index];
-                        let item_str = format!("{}", item);
-                        ui.label(item_str);
-                    });
-                });
+                body.rows(
+                    text_height,
+                    self.data.as_ref().unwrap().capacity(),
+                    |row_index, mut row| {
+                        row.col(|ui| {
+                            ui.label(row_index.to_string());
+                        });
+                        row.col(|ui| {
+                            let item = &self.data.as_ref().unwrap()[row_index];
+                            let item_str = format!("{item}");
+                            ui.label(item_str);
+                        });
+                    },
+                );
             });
     }
 }

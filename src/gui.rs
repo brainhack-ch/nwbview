@@ -4,15 +4,11 @@ use std::collections::HashMap;
 use std::mem;
 use std::path::Path;
 
+use crate::display_traits::Show;
 use crate::gui::egui::Ui;
 use crate::hdf;
-// use crate::plot::Popup;
-// use crate::popup::PopupMessage;
-// use crate::table::PopupTable;
-use crate::display_traits::Show;
-use eframe::egui::RichText;
-// use eframe::egui::{self, Window};
 use eframe::egui;
+use eframe::egui::RichText;
 
 trait AnyShow: Any + Show {}
 
@@ -80,12 +76,7 @@ impl NWBView {
                         if !self.open_windows.contains_key(dataset) {
                             let ds = match group.handler.dataset(dataset_name.as_ref()) {
                                 Err(e) => {
-                                    self.popup(
-                                        &e.to_string(),
-                                        ctx,
-                                        dataset,
-                                        &mut is_open,
-                                    );
+                                    self.popup(&e.to_string(), ctx, dataset, &mut is_open);
                                     continue;
                                 }
                                 Ok(x) => x,
@@ -95,22 +86,16 @@ impl NWBView {
 
                             match type_descriptor {
                                 Err(e) => {
-                                    self.popup(
-                                        &e.to_string(),
-                                        ctx,
-                                        dataset,
-                                        &mut is_open,
-                                    );
+                                    self.popup(&e.to_string(), ctx, dataset, &mut is_open);
                                     continue;
-                                },
+                                }
                                 Ok(descriptor) => match descriptor {
                                     hdf5::types::TypeDescriptor::Float(_) => {
                                         self.build_dataset::<f64>(&ds, dataset);
                                     }
                                     hdf5::types::TypeDescriptor::VarLenUnicode => {
                                         self.build_dataset::<hdf5::types::VarLenUnicode>(
-                                            &ds,
-                                            dataset,
+                                            &ds, dataset,
                                         );
                                     }
                                     hdf5::types::TypeDescriptor::Integer(_) => {
@@ -130,8 +115,7 @@ impl NWBView {
                                     // hdf5::types::TypeDescriptor::VarLenArray(_) => todo!(),
                                     hdf5::types::TypeDescriptor::VarLenAscii => {
                                         self.build_dataset::<hdf5::types::VarLenAscii>(
-                                            &ds,
-                                            dataset,
+                                            &ds, dataset,
                                         );
                                     }
                                     _ => {
@@ -142,11 +126,14 @@ impl NWBView {
                                             &mut is_open,
                                         );
                                         continue;
-                                    },
+                                    }
                                 },
                             }
                         }
-                        self.open_windows.get_mut(dataset).unwrap().show(ctx, &mut is_open);
+                        self.open_windows
+                            .get_mut(dataset)
+                            .unwrap()
+                            .show(ctx, &mut is_open);
                     }
                     self.check_close(is_open, dataset);
                 }
@@ -161,7 +148,10 @@ impl NWBView {
                             new_plot.get_data_from_group(group);
                             self.open_windows.insert(group_name.to_string(), new_plot);
                         }
-                        self.open_windows.get_mut(&group_name).unwrap().show(ctx, &mut is_open);
+                        self.open_windows
+                            .get_mut(&group_name)
+                            .unwrap()
+                            .show(ctx, &mut is_open);
                     }
                     self.check_close(is_open, &group_name);
                 }
@@ -180,22 +170,16 @@ impl NWBView {
             let scalar: String = ds.read_scalar::<T>().unwrap().to_string();
             new_ds.set_scalar(scalar);
         } else {
-            let x_data: Vec<T> = ds
-                .read_raw::<T>()
-                .unwrap();
+            let x_data: Vec<T> = ds.read_raw::<T>().unwrap();
             new_ds.set_data(x_data);
         }
         self.open_windows.insert(dataset.to_string(), new_ds);
     }
 
-    fn popup(
-        &mut self,
-        msg: &str,
-        ctx: &egui::Context,
-        dataset: &str,
-        is_open: &mut bool,
-    ) {
-        let msg = format!("The dataset {:?} could not be opened because of the following error:\n{:?}", dataset, msg);
+    fn popup(&mut self, msg: &str, ctx: &egui::Context, dataset: &str, is_open: &mut bool) {
+        let msg = format!(
+            "The dataset {dataset:?} could not be opened because of the following error:\n{msg:?}"
+        );
         let mut new_popup = Box::<super::popup::PopupWindow>::default();
         new_popup.set_title("Dataset error".to_string());
         new_popup.set_message(msg);
