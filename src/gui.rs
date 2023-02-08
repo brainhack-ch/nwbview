@@ -20,7 +20,7 @@ impl NWBView {
         let input_path = Path::new(&path);
         let actual_path = match input_path.canonicalize() {
             Err(_) => {
-                println!("Could not load the file '{}'!", path);
+                println!("Could not load the file '{path}'!");
                 return;
             }
             Ok(x) => x,
@@ -30,12 +30,12 @@ impl NWBView {
             let loaded_path = Path::new(&i.file.filename()).canonicalize().unwrap();
 
             if loaded_path == actual_path {
-                println!("The file '{}' is already loaded!", path);
+                println!("The file '{path}' is already loaded!");
                 return;
             }
         }
         match hdf::read_nwb_file(&path) {
-            None => println!("Could not load {}", path),
+            None => println!("Could not load {path}"),
             Some(i) => self.loaded_files.push(i),
         }
     }
@@ -145,7 +145,7 @@ impl NWBView {
                     let mut is_open = self.open_windows.contains(&group.handler.name());
                     if ui.button(RichText::new(" 🗠 Plot")).clicked() {
                         println!("plotting");
-                        print!("is_open: {}", is_open);
+                        print!("is_open: {is_open}");
                         if !is_open {
                             is_open = true;
                         }
@@ -175,7 +175,7 @@ impl NWBView {
                 .resizable(true)
                 .default_height(300.0)
                 .show(ctx, |ui| {
-                    ui.label(format!("{}", x_data));
+                    ui.label(format!("{x_data}"));
                 });
         } else {
             let x_data: Vec<T> = ds.read_raw().unwrap();
@@ -202,8 +202,7 @@ impl NWBView {
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.label(format!(
-                    "The dataset {:?} could not be opened because of the following error:",
-                    dataset
+                    "The dataset {dataset:?} could not be opened because of the following error:"
                 ));
                 ui.label(msg);
                 ui.vertical_centered(|sub_ui| {

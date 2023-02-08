@@ -106,7 +106,7 @@ impl<T: std::fmt::Display> TableWindow<T> {
                     });
                     row.col(|ui| {
                         let item = &self.data[row_index];
-                        let item_str = format!("{}", item);
+                        let item_str = format!("{item}");
                         ui.label(item_str);
                     });
                 });
