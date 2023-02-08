@@ -2,17 +2,6 @@ use crate::hdf;
 use crate::display_traits::{View, Show};
 use eframe::egui;
 
-// pub trait View {
-//     fn ui(&mut self, ui: &mut egui::Ui);
-// }
-
-// pub trait Popup {
-//     /// `&'static` so we can also use it as a key to store open/close state.
-//     fn name(&self) -> &'static str;
-
-//     /// Show windows, etc
-//     // fn show(&mut self, ctx: &egui::Context, open: &mut bool);
-// }
 
 #[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -58,12 +47,6 @@ impl Default for PlotWindow {
     }
 }
 
-// impl Popup for PlotWindow {
-//     fn name(&self) -> &'static str {
-//         "☰ Context Menus"
-//     }
-// }
-
 impl Show for PlotWindow {
     fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
         egui::Window::new(&self.title)
@@ -95,10 +78,6 @@ impl View for PlotWindow {
 }
 
 impl PlotWindow {
-    fn name(&self) -> &'static str {
-        "☰ Context Menus"
-    }
-
     pub fn get_data_from_group(&mut self, hdf5_group: &hdf::GroupTree) {
         self.title = hdf5_group.handler.name();
         self.y_data = hdf5_group

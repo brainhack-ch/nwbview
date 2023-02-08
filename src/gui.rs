@@ -146,7 +146,7 @@ impl NWBView {
                                 },
                             }
                         }
-                        self.open_windows[dataset].show(ctx, &mut is_open);
+                        self.open_windows.get_mut(dataset).unwrap().show(ctx, &mut is_open);
                     }
                     self.check_close(is_open, dataset);
                 }
@@ -159,9 +159,9 @@ impl NWBView {
                         if !self.open_windows.contains_key(&group_name) {
                             let mut new_plot = Box::<super::plot::PlotWindow>::default();
                             new_plot.get_data_from_group(group);
-                            self.open_windows.insert(group_name, new_plot);
+                            self.open_windows.insert(group_name.to_string(), new_plot);
                         }
-                        self.open_windows[&group_name].show(ctx, &mut is_open);
+                        self.open_windows.get_mut(&group_name).unwrap().show(ctx, &mut is_open);
                     }
                     self.check_close(is_open, &group_name);
                 }
@@ -182,10 +182,7 @@ impl NWBView {
         } else {
             let x_data: Vec<T> = ds
                 .read_raw::<T>()
-                .unwrap()
-                .iter()
-                .map(|x| *x as T)
-                .collect();
+                .unwrap();
             new_ds.set_data(x_data);
         }
         self.open_windows.insert(dataset.to_string(), new_ds);
@@ -202,7 +199,7 @@ impl NWBView {
         let mut new_popup = Box::<super::popup::PopupWindow>::default();
         new_popup.set_title("Dataset error".to_string());
         new_popup.set_message(msg);
-        new_popup.show(ctx, &mut is_open);
+        new_popup.show(ctx, is_open);
         self.open_windows.insert(dataset.to_string(), new_popup);
     }
 
@@ -304,15 +301,5 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
             TextStyle::Heading.resolve(&ctx.style()),
             Color32::WHITE,
         );
-    }
-}
-
-fn set_open(open: &mut HashMap<String, Box<dyn Any>>, key: &String, is_open: bool, handler: Box<dyn Any>) {
-    if is_open {
-        if !open.contains_key(key) {
-            open.insert(key.to_owned(), handler);
-        }
-    } else {
-        open.remove(key);
     }
 }

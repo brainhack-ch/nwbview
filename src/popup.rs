@@ -2,21 +2,7 @@ use eframe::egui;
 use eframe::egui::RichText;
 use eframe::egui::Window;
 use crate::display_traits::{View, Show};
-// use egui_extras::{Column, Size, StripBuilder, TableBuilder};
 
-// pub trait View {
-//     fn ui(&mut self, ui: &mut egui::Ui, open: &mut bool);
-// }
-
-/// Something to view
-// pub trait PopupMessage {
-//     // `&'static` so we can also use it as a key to store open/close state.
-//     fn title(&self) -> String;
-//     fn set_title(&mut self, title: String);
-//     fn set_message(&mut self, msg: String);
-//     // Show windows, etc
-//     // fn show(&mut self, ctx: &egui::Context, open: &mut bool);
-// }
 
 /// Shows off a popup with dynamic layout
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -37,10 +23,6 @@ impl Default for PopupWindow {
 }
 
 impl PopupWindow {
-    pub fn title(&self) -> String {
-        self.title.clone()
-    }
-
     pub fn set_title(&mut self, title: String) {
         self.title = title;
     }
