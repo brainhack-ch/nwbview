@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::mem;
@@ -9,8 +8,6 @@ use crate::gui::egui::Ui;
 use crate::hdf;
 use eframe::egui;
 use eframe::egui::RichText;
-
-trait AnyShow: Any + Show {}
 
 #[derive(Default)]
 pub(crate) struct NWBView {
