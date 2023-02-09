@@ -10,7 +10,7 @@ pub struct TableWindow<T> {
     scalar: Option<String>,
 }
 
-impl<T: hdf5::H5Type + std::fmt::Display> Default for TableWindow<T> {
+impl<T: std::fmt::Display> Default for TableWindow<T> {
     fn default() -> Self {
         Self {
             name: "Table".to_string(),
@@ -20,7 +20,7 @@ impl<T: hdf5::H5Type + std::fmt::Display> Default for TableWindow<T> {
     }
 }
 
-impl<T: hdf5::H5Type + std::fmt::Display> TableWindow<T> {
+impl<T: std::fmt::Display> TableWindow<T> {
     pub fn set_name(&mut self, name: String) {
         self.name = name;
     }
@@ -34,7 +34,7 @@ impl<T: hdf5::H5Type + std::fmt::Display> TableWindow<T> {
     }
 }
 
-impl<T: hdf5::H5Type + std::fmt::Display> Show for TableWindow<T> {
+impl<T: std::fmt::Display> Show for TableWindow<T> {
     fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
         if self.data.is_some() {
             egui::Window::new(&self.name)
@@ -61,7 +61,7 @@ impl<T: hdf5::H5Type + std::fmt::Display> Show for TableWindow<T> {
     }
 }
 
-impl<T: hdf5::H5Type + std::fmt::Display> View for TableWindow<T> {
+impl<T: std::fmt::Display> View for TableWindow<T> {
     fn ui(&mut self, ui: &mut egui::Ui) {
         StripBuilder::new(ui)
             .size(Size::remainder().at_least(50.0)) // for the table
@@ -75,7 +75,7 @@ impl<T: hdf5::H5Type + std::fmt::Display> View for TableWindow<T> {
     }
 }
 
-impl<T: hdf5::H5Type + std::fmt::Display> TableWindow<T> {
+impl<T: std::fmt::Display> TableWindow<T> {
     fn table_ui(&mut self, ui: &mut egui::Ui) {
         let text_height = egui::TextStyle::Body.resolve(ui.style()).size;
 
