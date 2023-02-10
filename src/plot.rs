@@ -14,6 +14,7 @@ pub struct PlotWindow {
     width: f32,
     height: f32,
     proportional: bool,
+    changed_proportional: bool,
     title: String,
     x_data: Vec<f64>,
     y_data: Vec<f64>,
@@ -35,6 +36,7 @@ impl Default for PlotWindow {
             width: 800.0,
             height: 400.0,
             proportional: false,
+            changed_proportional: false,
             title: "".to_string(),
             x_data: vec![],
             y_data: vec![],
@@ -72,8 +74,13 @@ impl View for PlotWindow {
         )));
 
         // Plot the data
-        ui.checkbox(&mut self.proportional, "Equal aspect ratio")
+        let mut proportional = self.proportional;
+        ui.checkbox(&mut proportional, "Equal aspect ratio")
             .on_hover_text("Ticks are the same size on both axes.");
+        if proportional != self.proportional {
+            self.proportional = proportional;
+            self.changed_proportional = true;
+        }
         ui.horizontal(|ui| {
             self.trace_plot(ui).context_menu(|_ui| {});
         });
@@ -126,7 +133,7 @@ impl PlotWindow {
         self.step_size = compute_step_size(self.n_steps);
     }
 
-    fn trace_plot(&self, ui: &mut egui::Ui) -> egui::Response {
+    fn trace_plot(&mut self, ui: &mut egui::Ui) -> egui::Response {
         use egui::plot::{Line, PlotPoints};
         let line = Line::new(
             (0..=self.n_steps)
@@ -145,6 +152,10 @@ impl PlotWindow {
             .height(self.height);
         if self.proportional {
             plot = plot.data_aspect(1.0);
+        }
+        if self.changed_proportional {
+            self.changed_proportional = false;
+            plot = plot.reset();
         }
         plot.show(ui, |plot_ui| plot_ui.line(line)).response
     }
