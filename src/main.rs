@@ -26,5 +26,6 @@ fn main() {
         "NWB View",
         options,
         Box::new(|_cc| Box::<NWBView>::default()),
-    );
+    )
+    .ok();
 }

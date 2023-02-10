@@ -242,14 +242,16 @@ impl eframe::App for NWBView {
         preview_files_being_dropped(ctx);
 
         // Collect dropped files:
-        if !ctx.input().raw.dropped_files.is_empty() {
-            for file in ctx.input().raw.dropped_files.clone() {
-                match file.path {
-                    None => println!("Could not load the file!"),
-                    Some(x) => self.add_file(x.display().to_string()),
+        ctx.input(|i| {
+            if !i.raw.dropped_files.is_empty() {
+                for file in i.raw.dropped_files.clone() {
+                    match file.path {
+                        None => println!("Could not load the file!"),
+                        Some(x) => self.add_file(x.display().to_string()),
+                    }
                 }
             }
-        }
+        })
     }
 }
 
@@ -258,29 +260,33 @@ fn preview_files_being_dropped(ctx: &egui::Context) {
     use egui::*;
     use std::fmt::Write as _;
 
-    if !ctx.input().raw.hovered_files.is_empty() {
-        let mut text = "Dropping files:\n".to_owned();
-        for file in &ctx.input().raw.hovered_files {
-            if let Some(path) = &file.path {
-                write!(text, "\n{}", path.display()).ok();
-            } else if !file.mime.is_empty() {
-                write!(text, "\n{}", file.mime).ok();
-            } else {
-                text += "\n???";
-            }
-        }
-
+    if !ctx.input(|i| i.raw.hovered_files.is_empty()) {
         let painter =
             ctx.layer_painter(LayerId::new(Order::Foreground, Id::new("file_drop_target")));
 
-        let screen_rect = ctx.input().screen_rect();
+        let screen_rect = ctx.screen_rect();
+
+        let text = ctx.input(|i| {
+            let mut text = "Dropping files:\n".to_owned();
+            for file in &i.raw.hovered_files {
+                if let Some(path) = &file.path {
+                    write!(text, "\n\n{}", path.display()).ok();
+                } else if !file.mime.is_empty() {
+                    write!(text, "\n\n{}", file.mime).ok();
+                } else {
+                    text += "\n\n???";
+                }
+            }
+            text
+        });
         painter.rect_filled(screen_rect, 0.0, Color32::from_black_alpha(192));
-        painter.text(
-            screen_rect.center(),
-            Align2::CENTER_CENTER,
+
+        let text_layout = painter.layout(
             text,
             TextStyle::Heading.resolve(&ctx.style()),
             Color32::WHITE,
+            screen_rect.max.x - screen_rect.min.x,
         );
+        painter.galley(egui::Pos2::new(0.0, 0.0), text_layout);
     }
 }
