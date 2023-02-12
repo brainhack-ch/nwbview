@@ -1,17 +1,6 @@
+use crate::display_traits::{Show, View};
 use crate::hdf;
 use eframe::egui;
-
-pub trait View {
-    fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree);
-}
-
-pub trait Popup {
-    /// `&'static` so we can also use it as a key to store open/close state.
-    fn name(&self) -> &'static str;
-
-    /// Show windows, etc
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, hdf5_group: &hdf::GroupTree);
-}
 
 #[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -24,6 +13,15 @@ pub struct PlotWindow {
     center_y_axis: bool,
     width: f32,
     height: f32,
+    proportional: bool,
+    changed_proportional: bool,
+    title: String,
+    x_data: Vec<f64>,
+    y_data: Vec<f64>,
+    min_value: f64,
+    max_value: f64,
+    n_steps: usize,
+    step_size: usize,
 }
 
 impl Default for PlotWindow {
@@ -37,59 +35,64 @@ impl Default for PlotWindow {
             center_y_axis: false,
             width: 800.0,
             height: 400.0,
+            proportional: false,
+            changed_proportional: false,
+            title: "".to_string(),
+            x_data: vec![],
+            y_data: vec![],
+            min_value: 0.0,
+            max_value: 0.0,
+            n_steps: 0,
+            step_size: 0,
         }
     }
 }
 
-impl Popup for PlotWindow {
-    fn name(&self) -> &'static str {
-        "☰ Context Menus"
-    }
-
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, hdf5_group: &hdf::GroupTree) {
-        egui::Window::new(hdf5_group.handler.name())
+impl Show for PlotWindow {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
+        egui::Window::new(&self.title)
             .vscroll(false)
             .resizable(false)
             .open(open)
-            .show(ctx, |ui| self.ui(ui, hdf5_group));
+            .show(ctx, |ui| self.ui(ui));
     }
 }
 
 impl View for PlotWindow {
-    fn ui(&mut self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) {
+    fn ui(&mut self, ui: &mut egui::Ui) {
         ui.separator();
 
-        let y_data: Vec<f64> = hdf5_group
-            .handler
-            .dataset("data")
-            .unwrap()
-            .read_raw()
-            .unwrap();
-
-        // Display some basic statistics
-        let min_value = y_data
-            .iter()
-            .min_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap();
-        let max_value = y_data
-            .iter()
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap();
+        // Show some statistics
         ui.label(egui::RichText::new("Statistics:"));
-        ui.label(egui::RichText::new(format!("min value={min_value:?}")));
-        ui.label(egui::RichText::new(format!("max value={max_value:?}")));
+        ui.label(egui::RichText::new(format!(
+            "min value={:?}",
+            self.min_value
+        )));
+        ui.label(egui::RichText::new(format!(
+            "max value={:?}",
+            self.max_value
+        )));
 
         // Plot the data
+        let mut proportional = self.proportional;
+        ui.checkbox(&mut proportional, "Equal aspect ratio")
+            .on_hover_text("Ticks are the same size on both axes.");
+        if proportional != self.proportional {
+            self.proportional = proportional;
+            self.changed_proportional = true;
+        }
         ui.horizontal(|ui| {
-            self.trace_plot(ui, hdf5_group).context_menu(|_ui| {});
+            self.trace_plot(ui).context_menu(|_ui| {});
         });
+
         ui.label("Zoom in zoom out using ctrl+mouse.");
     }
 }
 
 impl PlotWindow {
-    fn trace_plot(&self, ui: &mut egui::Ui, hdf5_group: &hdf::GroupTree) -> egui::Response {
-        let y_data: Vec<f64> = hdf5_group
+    pub fn get_data_from_group(&mut self, hdf5_group: &hdf::GroupTree) {
+        self.title = hdf5_group.handler.name();
+        self.y_data = hdf5_group
             .handler
             .dataset("data")
             .unwrap()
@@ -101,8 +104,8 @@ impl PlotWindow {
             .unwrap()
             .iter()
             .any(|x| x.name().ends_with("timestamps"));
-        let x_data: Vec<f64> = match has_timestamps {
-            false => (0..y_data.len())
+        self.x_data = match has_timestamps {
+            false => (0..self.y_data.len())
                 .collect::<Vec<usize>>()
                 .iter()
                 .map(|x| *x as f64)
@@ -114,16 +117,31 @@ impl PlotWindow {
                 .read_raw()
                 .unwrap(),
         };
+
+        self.min_value = *self
+            .y_data
+            .iter()
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        self.max_value = *self
+            .y_data
+            .iter()
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+
+        self.n_steps = self.x_data.len() - 1;
+        self.step_size = compute_step_size(self.n_steps);
+    }
+
+    fn trace_plot(&mut self, ui: &mut egui::Ui) -> egui::Response {
         use egui::plot::{Line, PlotPoints};
-        let n = x_data.len() - 1;
-        let step_size = compute_step_size(n);
         let line = Line::new(
-            (0..=n)
-                .step_by(step_size)
-                .map(|i| [x_data[i], y_data[i]])
+            (0..=self.n_steps)
+                .step_by(self.step_size)
+                .map(|i| [self.x_data[i], self.y_data[i]])
                 .collect::<PlotPoints>(),
         );
-        egui::plot::Plot::new("trace_plot")
+        let mut plot = egui::plot::Plot::new("trace_plot")
             .show_axes(self.show_axes)
             .allow_drag(self.allow_drag)
             .allow_zoom(self.allow_zoom)
@@ -131,10 +149,15 @@ impl PlotWindow {
             .center_x_axis(self.center_x_axis)
             .center_x_axis(self.center_y_axis)
             .width(self.width)
-            .height(self.height)
-            .data_aspect(1.0)
-            .show(ui, |plot_ui| plot_ui.line(line))
-            .response
+            .height(self.height);
+        if self.proportional {
+            plot = plot.data_aspect(1.0);
+        }
+        if self.changed_proportional {
+            self.changed_proportional = false;
+            plot = plot.reset();
+        }
+        plot.show(ui, |plot_ui| plot_ui.line(line)).response
     }
 }
 
