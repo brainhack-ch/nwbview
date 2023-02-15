@@ -3,7 +3,7 @@ authors = ["Anıl Tuncel <aniltuncel@protonmail.com>"]
 categories = ["science", "visualization", "science::neuroscience"]
 description = "Neurodata Without Borders viewer"
 name = "nwbview"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 repository = "https://github.com/brainhack-ch/nwbview"
 license = "Apache-2.0"
@@ -15,6 +15,7 @@ include = [
   "Cargo.toml",
   "LICENSE",
   "src/**/*",
+  "static/icon.png",
 ]
 
 [[bin]]
