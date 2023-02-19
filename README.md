@@ -16,7 +16,20 @@ The underlying storage technology used by the NWB format is the binary [HDF form
 
 ## GUI
 
+The screenshot below shows the `nwbview` GUI. The left panel shows the contents of the NWB file in a tree structure. The right panel shows the details of the selected item, which can be a plot, a table or a text.
+
+![localImage](./static/screenshot.png)
+
 `nwbview` uses the [egui](https://github.com/emilk/egui)  Rust GUI library for rendering.
+
+
+## Public NWB Data Sources
+
+Below are some public NWB data sources that can be displayed with `nwbview`.
+
+* [nwb.org/example-datasets](https://www.nwb.org/example-datasets/)
+* [channelpedia](https://channelpedia.epfl.ch/)
+
 
 ## To install and run using cargo
 
