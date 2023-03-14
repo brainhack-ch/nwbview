@@ -1696,7 +1696,7 @@ dependencies = [
 
 [[package]]
 name = "nwbview"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "eframe",
  "egui_extras",
