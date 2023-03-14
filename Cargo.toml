@@ -14,8 +14,7 @@ include = [
   "Cargo.lock",
   "Cargo.toml",
   "LICENSE",
-  "src/**/*",
-  "static/icon.png",
+  "src/**/*"
 ]
 
 [[bin]]
