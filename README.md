@@ -27,6 +27,7 @@ The screenshot below shows the `nwbview` GUI. The left panel shows the contents 
 
 Below are some public NWB data sources that can be displayed with `nwbview`.
 
+* [thalamoreticular-portal](https://bbp.epfl.ch/thalamoreticular-portal)
 * [nwb.org/example-datasets](https://www.nwb.org/example-datasets/)
 * [channelpedia](https://channelpedia.epfl.ch/)
 
