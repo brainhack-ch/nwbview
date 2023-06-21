@@ -34,6 +34,8 @@ Below are some public NWB data sources that can be displayed with `nwbview`.
 
 ## To install and run using cargo
 
+**Note:** HDF5 needs to be installed in your system as cargo will try to locate the HDF5 root directory and/or headers.
+
 First install the `cargo` package manager and then run the following command to install `nwbview`.
 
 ```shell
