@@ -43,7 +43,9 @@ jobs:
     - name: Setup vcpkg, checkout old commit for hdf5 1.12.0
       run: |
         git clone https://github.com/Microsoft/vcpkg.git
+        cd vcpkg
         git checkout 8534df4e72c7c003fdc26f67e014f27a834d7fb2
+        cd ..
         .\vcpkg\bootstrap-vcpkg.bat
     - name: Install HDF5 with vcpkg
       run: |
