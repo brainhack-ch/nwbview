@@ -48,6 +48,14 @@ jobs:
       run: |
         .\vcpkg\vcpkg install hdf5:x64-windows
       shell: cmd
+    - name: Set environment variables for HDF5
+      run: |
+        $vcpkg_installed_x64_windows = "$env:GITHUB_WORKSPACE\vcpkg\installed\x64-windows"
+        echo "HDF5_DIR=$vcpkg_installed_x64_windows" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+        echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE\vcpkg" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+        $path = "$env:PATH;$vcpkg_installed_x64_windows\bin"
+        echo "PATH=$path" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+      shell: pwsh
     - uses: Swatinem/rust-cache@v2
     - name: Install Rust dependencies
       run: |
