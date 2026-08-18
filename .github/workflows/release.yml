@@ -28,7 +28,6 @@ jobs:
             libgtk-3-dev \
             libglib2.0-dev \
             libgdk-pixbuf-2.0-dev \
-            librust-atk-dev \
             libhdf5-serial-dev
       - name: Compile and release
         uses: rust-build/rust-build.action@6febf1b0ed6499a46610b58ef9d810398e75f3c2 # v1.4.5

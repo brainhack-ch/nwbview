@@ -27,8 +27,7 @@ jobs:
           libgtk-3-dev \
           libglib2.0-dev \
           libgdk-pixbuf-2.0-dev \
-          libhdf5-dev \
-          librust-atk-dev
+          libhdf5-dev
     - name: Check package & dependencies for errors
       run: cargo check
     - name: Lint
