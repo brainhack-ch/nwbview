@@ -1,14 +1,14 @@
 [package]
-authors = ["Anıl Tuncel <aniltuncel@protonmail.com>"]
+authors = ["Anıl Tuncel <anil.tuncel@alumni.ethz.ch>"]
 categories = ["science", "visualization", "science::neuroscience"]
 description = "Neurodata Without Borders viewer"
 name = "nwbview"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 repository = "https://github.com/brainhack-ch/nwbview"
 license = "Apache-2.0"
 readme = "README.md"
-keywords = ["neuroscience", "viewer", "visualization", "NWB"]
+keywords = ["neuroscience", "viewer", "visualization", "NWB", "hdf5", "GUI"]
 
 include = [
   "Cargo.lock",
