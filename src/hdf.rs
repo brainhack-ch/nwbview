@@ -32,10 +32,7 @@ pub(crate) fn build_tree(group: hdf5::Group) -> GroupTree {
 }
 
 pub(crate) fn read_nwb_file(path: &str) -> Option<FileTree> {
-    let file = match File::open(path) {
-        Err(_) => None,
-        Ok(hdf_file) => Some(hdf_file),
-    };
+    let file = File::open(path).ok();
 
     match file {
         None => None,

@@ -14,20 +14,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: Swatinem/rust-cache@v2
-    - name: Cache APT Packages
-      uses: awalsh128/cache-apt-pkgs-action@latest
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+    - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
       with:
-        packages:
-          build-essential
-          libgtk-3-dev
-          libhdf5-dev
-          librust-atk-dev
-        version: 1.0
-    - name: Install dependencies
+        components: rustfmt, clippy
+    - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+    - name: Install system dependencies
       run: |
-        rustup component add clippy
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          libgtk-3-dev \
+          libglib2.0-dev \
+          libgdk-pixbuf-2.0-dev \
+          libhdf5-dev
     - name: Check package & dependencies for errors
       run: cargo check
     - name: Lint

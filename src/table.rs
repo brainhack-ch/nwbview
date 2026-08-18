@@ -3,7 +3,6 @@ use eframe::egui;
 use egui_extras::{Column, Size, StripBuilder, TableBuilder};
 
 /// Shows off a table with dynamic layout
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct TableWindow<T> {
     name: String,
     data: Option<Vec<T>>,

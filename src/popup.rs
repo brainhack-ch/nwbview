@@ -4,7 +4,6 @@ use eframe::egui::RichText;
 use eframe::egui::Window;
 
 /// Shows off a popup with dynamic layout
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PopupWindow {
     title: String,
     message: String,
