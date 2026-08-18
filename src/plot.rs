@@ -3,7 +3,6 @@ use crate::hdf;
 use eframe::egui;
 
 #[derive(Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct PlotWindow {
     show_axes: [bool; 2],
     allow_drag: bool,

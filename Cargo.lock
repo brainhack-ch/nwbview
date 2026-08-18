@@ -2041,7 +2041,6 @@ dependencies = [
  "hdf5",
  "image",
  "rfd",
- "serde",
 ]
 
 [[package]]
