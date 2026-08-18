@@ -207,14 +207,10 @@ impl eframe::App for NWBView {
             ui.label("Drag-and-drop files onto the window!");
 
             // Process file when Open button is clicked
-            if ui.button("Open file…").clicked() {
-                if let Some(path) = rfd::FileDialog::new().pick_file() {
-                    let picked_path = Some(path.display().to_string());
-
-                    if let Some(x) = &picked_path {
-                        self.add_file(x.to_string());
-                    }
-                }
+            if ui.button("Open file…").clicked()
+                && let Some(path) = rfd::FileDialog::new().pick_file()
+            {
+                self.add_file(path.display().to_string());
             }
 
             let mut all_loaded_files: Vec<hdf::FileTree> = Vec::new();
